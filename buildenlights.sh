@@ -16,24 +16,24 @@ fi
 
 # enable the success light
 success_on() {
-    __uhubctl_call 1 ${PORT_SUCCESS}
+    __uhubctl_call 1 "${PORT_SUCCESS}"
 }
 # disable the success light
 success_off() {
-    __uhubctl_call 0 ${PORT_SUCCESS}
+    __uhubctl_call 0 "${PORT_SUCCESS}"
 }
 # enable the failure light
 fail_on() {
-    __uhubctl_call 1 ${PORT_FAILURE}
+    __uhubctl_call 1 "${PORT_FAILURE}"
 }
 # disable the failure light
 fail_off() {
-    __uhubctl_call 0 ${PORT_FAILURE}
+    __uhubctl_call 0 "${PORT_FAILURE}"
 }
 
 # all uhubctl interaction happens here
 __uhubctl_call() {
-    ACTION=${1}
+    ACTION="${1}"
     if [[ -z "${2:-}" ]] || [[ "${2}" = "any" ]] ; then
         # toggle all ports
         PORTS=""
@@ -57,23 +57,23 @@ __uhubctl_call() {
 # note that a response could be a single result or multiple
 #  - in that case, use the latest
 __api_status_call() {
-    FALLBACK=${1}
-    URL=${2}
+    FALLBACK="${1}"
+    URL="${2}"
     if [[ "${FALLBACK}" -eq 0 ]]; then
-        TIMEOUT=${REQUEST_TIMEOUT}
+        TIMEOUT="${REQUEST_TIMEOUT}"
         PROXY=""
     else
-        TIMEOUT=${FALLBACK_PROXY_REQUEST_TIMEOUT}
+        TIMEOUT="${FALLBACK_PROXY_REQUEST_TIMEOUT}"
         PROXY="--proxy ${FALLBACK_PROXY}"
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout ${TIMEOUT} curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q || true)
-        echo ${STATUS_DATA} > /dev/stderr
+        STATUS_DATA=$(timeout "${TIMEOUT}" curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q || true)
+        echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout ${TIMEOUT} curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q \
+        (timeout "${TIMEOUT}" curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
@@ -83,58 +83,58 @@ __api_status_finished() {
 
     # we currently ignore SUCCESS_STATE in $1, just wait for next run.
     echo "sleep ${DELAY_SECONDS}..."
-    sleep ${DELAY_SECONDS} || true
+    sleep "${DELAY_SECONDS}" || true
 }
 
 __api_status_error() {
     # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
 
     # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
-    LONGER_SLEEP=$(( $DELAY_SECONDS * 10 ))
+    LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
     echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
-    sleep ${LONGER_SLEEP} || true
+    sleep "${LONGER_SLEEP}" || true
 }
 
 # USB device identifier
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - many motherboards feature switchable hubs, unplugging your input devices is undesirable
 # - this filters by the device's self-identification
-VENDOR=05e3:0608
+VENDOR="05e3:0608"
 # device location
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - same switchable chipsets appear in many end devices
 # - this filters by physical topology
-LOCATION=1-1.3
+LOCATION="1-1.3"
 
 # Hub port to switch (optional)
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # - setting to empty or "any" will toggle all ports
 # Here, we use one port for a "success" light...
-PORT_SUCCESS=3
+PORT_SUCCESS="3"
 # ... and another for a "failure" light.
 # (e.g. in my first setup, only the failure light was present)
-PORT_FAILURE=4
+PORT_FAILURE="4"
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
-UHUBCTL=$(which uhubctl)
+UHUBCTL="$(which uhubctl)"
 # jq, a JSON command line processor
-JQ=$(which jq)
+JQ="$(which jq)"
 # if array result, get the newest non-pending part, return state; if single result, return its state.
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
 
 # time in seconds to wait for the API response
-REQUEST_TIMEOUT=5
+REQUEST_TIMEOUT="5"
 # if the request doesn't return data, retry via proxy (if any)
-FALLBACK_PROXY=
+FALLBACK_PROXY=""
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
-FALLBACK_PROXY_REQUEST_TIMEOUT=30
+FALLBACK_PROXY_REQUEST_TIMEOUT="30"
 # delay between API requests
-DELAY_SECONDS=300
+DELAY_SECONDS="300"
 # repo owner and repo name - required, intentionally no default
 REPO_OWNER=
 REPO_NAME=
 # branches/refs to watch for status - one or more, space-separated
 # - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
-REFS=master
+REFS="master"
 # API authorization token, see https://developer.github.com/v3/#authentication
 # - required but intentionally left blank
 AUTHORIZATION=
@@ -183,20 +183,20 @@ while true; do
             break
         fi
         if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
-            BUILD_FAIL_COUNT=$(($BUILD_FAIL_COUNT + 1))
+            BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
         fi
     done
 
 
-    if [[ ${FALLBACK} -lt 2 ]]; then
-        echo "$SECONDS seconds wall time"
-        echo "Result: $BUILD_STATUS"
+    if [[ "${FALLBACK}" -lt 2 ]]; then
+        echo "${SECONDS} seconds wall time"
+        echo "Result: ${BUILD_STATUS}"
         if [[ "$BUILD_FAIL_COUNT" -eq 0 ]]; then
             # disable failure light, enable success light
             fail_off
             success_on
             SUCCESS=1
-        elif [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
+        elif [[ "${BUILD_STATUS}" = "failure" ]] || [[ "${BUILD_STATUS}" = "error" ]]; then
             # disable success light, enable failure light
             success_off
             fail_on
@@ -208,13 +208,13 @@ while true; do
         fi
 
         # pass the last known success state and current build status
-        __api_status_finished ${SUCCESS}
+        __api_status_finished "${SUCCESS}"
 
     else
         # error state (e.g. API not responding?), disable both lights and try to recover
         success_off
         fail_off
-        __api_status_error ${SUCCESS}
+        __api_status_error "${SUCCESS}"
     fi
 
     # we can quit the script by setting this variable to 0, e.g. in a handler
