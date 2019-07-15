@@ -139,8 +139,11 @@ REFS="master"
 # - required but intentionally left blank
 AUTHORIZATION=
 
-# override the above defaults (and prevent the authorization token from being stored in git)
+# override the above defaults
+# - also prevent *your own* authorization token from being stored in git
 # - custom settings belong *there*
+# - see buildenlights.rc.example
+# shellcheck disable=SC1091
 source ./buildenlights.rc
 
 if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
