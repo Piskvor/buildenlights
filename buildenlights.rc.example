@@ -1,0 +1,6 @@
+DELAY_SECONDS=300
+REPO_OWNER=Piskvor
+REPO_NAME=buildenlights
+REFS="develop feature/something master"
+AUTHORIZATION="token f00ba7"
+FALLBACK_PROXY=http://127.0.0.1:3128/
