@@ -31,6 +31,7 @@ fail_off() {
     __uhubctl_call 0 ${PORT_FAILURE}
 }
 
+# all uhubctl interaction happens here
 __uhubctl_call() {
     ACTION=${1}
     if [[ -z "${2:-}" ]] || [[ "${2}" = "any" ]] ; then
@@ -52,6 +53,9 @@ __uhubctl_call() {
     fi
 }
 
+# request the ref status from GH
+# note that a response could be a single result or multiple
+#  - in that case, use the latest
 __api_status_call() {
     FALLBACK=${1}
     URL=${2}
@@ -83,7 +87,7 @@ __api_status_finished() {
 }
 
 __api_status_error() {
-    # called when the API itself is in an error state
+    # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
 
     # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
     LONGER_SLEEP=$(( $DELAY_SECONDS * 10 ))
@@ -91,25 +95,33 @@ __api_status_error() {
     sleep ${LONGER_SLEEP} || true
 }
 
-# USB device identifier (optional but recommended; if unspecified, all matching hubs will be switched)
+# USB device identifier
+# - optional but recommended; if unspecified, all matching hubs will be switched
+# - many motherboards feature switchable hubs, unplugging your input devices is undesirable
+# - this filters by the device's self-identification
 VENDOR=05e3:0608
-# device location (optional but recommended; if unspecified, all matching hubs will be switched)
+# device location
+# - optional but recommended; if unspecified, all matching hubs will be switched
+# - same switchable chipsets appear in many end devices
+# - this filters by physical topology
 LOCATION=1-1.3
 
 # Hub port to switch (optional)
-# - setting the port number to "-" (hyphen) disables the switching
+# - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # - setting to empty or "any" will toggle all ports
 # Here, we use one port for a "success" light...
 PORT_SUCCESS=3
 # ... and another for a "failure" light.
+# (e.g. in my first setup, only the failure light was present)
 PORT_FAILURE=4
-# uhubctl executable - get the source at https://github.com/mvp/uhubctl
+# uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL=$(which uhubctl)
-# jq
+# jq, a JSON command line processor
 JQ=$(which jq)
+# if array result, get the newest non-pending part, return state; if single result, return its state.
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
 
-# time to wait for the API response
+# time in seconds to wait for the API response
 REQUEST_TIMEOUT=5
 # if the request doesn't return data, retry via proxy (if any)
 FALLBACK_PROXY=
@@ -117,15 +129,18 @@ FALLBACK_PROXY=
 FALLBACK_PROXY_REQUEST_TIMEOUT=30
 # delay between API requests
 DELAY_SECONDS=300
-# repo owner and repo name
+# repo owner and repo name - required, intentionally no default
 REPO_OWNER=
 REPO_NAME=
 # branches/refs to watch for status - one or more, space-separated
+# - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
 REFS=master
 # API authorization token, see https://developer.github.com/v3/#authentication
+# - required but intentionally left blank
 AUTHORIZATION=
 
 # override the above defaults (and prevent the authorization token from being stored in git)
+# - custom settings belong *there*
 source ./buildenlights.rc
 
 if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
@@ -137,6 +152,8 @@ if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z 
     exit 1
 fi
 
+# this is a hard requirement
+# - everything else can be replaced or worked around
 if [[ ! -x "${UHUBCTL}" ]]; then
     echo "Cannot find uhubctl executable."
     exit 2
