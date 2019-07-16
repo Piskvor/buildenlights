@@ -1,5 +1,5 @@
 shellcheck:
-  stage: linting
+  stage: test
   image: pipelinecomponents/shellcheck:latest
   script:
     - shellcheck *.sh *.rc*
