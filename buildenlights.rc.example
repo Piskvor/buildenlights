@@ -1,6 +1,22 @@
-DELAY_SECONDS=300
+## required: repo owner, repo name, authorization token
 REPO_OWNER=Piskvor
 REPO_NAME=buildenlights
-REFS="develop feature/something master"
-AUTHORIZATION="token f00ba7"
-FALLBACK_PROXY=http://127.0.0.1:3128/
+# personal access token, permission "repo"
+# - see https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line
+AUTHORIZATION="token 000000000000000000000000000000000"
+
+## optional: other variables used in buildenlights.sh
+
+# branches or other refs to watch
+REFS="master dev alpha beta gamma feature/some_branch v3.14.1"
+
+# invoke uhubctl without arguments to find the device ID and location
+USB_DEVICE_ID="05e3:0608"
+USB_DEVICE_LOCATION="2-1.4"
+
+# "-" disables this feature, number selects a port, "any" switches all ports on the selected device
+USB_PORT_SUCCESS="-"
+USB_PORT_FAILURE="6"
+
+# if you need to use an executable in a different path, do so here. This is unusual and shouldn't be needed.
+UHUBCTL=/usr/local/bin/uhubctl.x86
