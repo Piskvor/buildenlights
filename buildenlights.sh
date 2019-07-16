@@ -36,20 +36,20 @@ __uhubctl_call() {
     ACTION="${1}"
     if [[ -z "${2:-}" ]] || [[ "${2}" = "any" ]] ; then
         # toggle all ports
-        PORTS=""
+        PORTS=()
     else
         if [[ "${2}" = "-" ]]; then
             # ignore this call
             return
         fi
-        PORTS="--ports ${2}"
+        PORTS=(--ports ${2})
     fi
     # do not exit on error here (e.g. no hubs matched)
     # be more verbose if debug 2
     if [[ "$DEBUG" -lt 2 ]]; then
-        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" ${PORTS} &> /dev/null || true
+        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" "${PORTS[@]}" &> /dev/null || true
     else
-        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" ${PORTS} || true
+        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" "${PORTS[@]}" || true
     fi
 }
 
@@ -61,19 +61,19 @@ __api_status_call() {
     URL="${2}"
     if [[ "${FALLBACK}" -eq 0 ]]; then
         TIMEOUT="${REQUEST_TIMEOUT}"
-        PROXY=""
+        PROXY=()
     else
         TIMEOUT="${FALLBACK_PROXY_REQUEST_TIMEOUT}"
-        PROXY="--proxy ${FALLBACK_PROXY}"
+        PROXY=(--proxy ${FALLBACK_PROXY})
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" curl "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" curl ${PROXY} -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" ${URL} -q \
+        (timeout "${TIMEOUT}" curl "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
