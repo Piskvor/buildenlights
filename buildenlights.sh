@@ -14,6 +14,73 @@ if [[ "${1:-}" = "--infinite-loop" ]]; then
     shift
 fi
 
+# USB device identifier
+# - optional but recommended; if unspecified, all matching hubs will be switched
+# - many motherboards feature switchable hubs, unplugging your input devices is undesirable
+# - this filters by the device's self-identification
+VENDOR="05e3:0608"
+# device location
+# - optional but recommended; if unspecified, all matching hubs will be switched
+# - same switchable chipsets appear in many end devices
+# - this filters by physical topology
+LOCATION="1-1.3"
+
+# Hub port to switch (optional)
+# - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
+# - setting to empty or "any" will toggle all ports
+# Here, we use one port for a "success" light...
+PORT_SUCCESS="3"
+# ... and another for a "failure" light.
+# (e.g. in my first setup, only the failure light was present)
+PORT_FAILURE="4"
+# uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
+UHUBCTL="$(which uhubctl)"
+# jq, a JSON command line processor
+JQ="$(which jq)"
+# if array result, get the newest non-pending part, return state; if single result, return its state.
+JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
+
+# time in seconds to wait for the API response
+REQUEST_TIMEOUT="5"
+# if the request doesn't return data, retry via proxy (if any)
+FALLBACK_PROXY=""
+# time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
+FALLBACK_PROXY_REQUEST_TIMEOUT="30"
+# delay between API requests
+DELAY_SECONDS="300"
+# repo owner and repo name - required, intentionally no default
+REPO_OWNER=
+REPO_NAME=
+# branches/refs to watch for status - one or more, space-separated
+# - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
+REFS="master"
+# API authorization token, see https://developer.github.com/v3/#authentication
+# - required but intentionally left blank
+AUTHORIZATION=
+
+# override the above defaults
+# - also prevent *your own* authorization token from being stored in git
+# - custom settings belong *there*
+# - see buildenlights.rc.example
+# shellcheck disable=SC1091
+source ./buildenlights.rc
+
+if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
+    echo "Config required in buildenlights.rc, none of the following can be empty:"
+    echo "OWNER: $REPO_OWNER"
+    echo "REPO: $REPO_NAME"
+    echo "BRANCH: $REFS"
+    echo "AUTHORIZATION: $AUTHORIZATION"
+    exit 1
+fi
+
+# this is a hard requirement
+# - everything else can be replaced or worked around
+if [[ ! -x "${UHUBCTL}" ]]; then
+    echo "Cannot find uhubctl executable."
+    exit 2
+fi
+
 # enable the success light
 success_on() {
     __uhubctl_call 1 "${PORT_SUCCESS}"
@@ -94,73 +161,6 @@ __api_status_error() {
     echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
     sleep "${LONGER_SLEEP}" || true
 }
-
-# USB device identifier
-# - optional but recommended; if unspecified, all matching hubs will be switched
-# - many motherboards feature switchable hubs, unplugging your input devices is undesirable
-# - this filters by the device's self-identification
-VENDOR="05e3:0608"
-# device location
-# - optional but recommended; if unspecified, all matching hubs will be switched
-# - same switchable chipsets appear in many end devices
-# - this filters by physical topology
-LOCATION="1-1.3"
-
-# Hub port to switch (optional)
-# - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
-# - setting to empty or "any" will toggle all ports
-# Here, we use one port for a "success" light...
-PORT_SUCCESS="3"
-# ... and another for a "failure" light.
-# (e.g. in my first setup, only the failure light was present)
-PORT_FAILURE="4"
-# uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
-UHUBCTL="$(which uhubctl)"
-# jq, a JSON command line processor
-JQ="$(which jq)"
-# if array result, get the newest non-pending part, return state; if single result, return its state.
-JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
-
-# time in seconds to wait for the API response
-REQUEST_TIMEOUT="5"
-# if the request doesn't return data, retry via proxy (if any)
-FALLBACK_PROXY=""
-# time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
-FALLBACK_PROXY_REQUEST_TIMEOUT="30"
-# delay between API requests
-DELAY_SECONDS="300"
-# repo owner and repo name - required, intentionally no default
-REPO_OWNER=
-REPO_NAME=
-# branches/refs to watch for status - one or more, space-separated
-# - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
-REFS="master"
-# API authorization token, see https://developer.github.com/v3/#authentication
-# - required but intentionally left blank
-AUTHORIZATION=
-
-# override the above defaults
-# - also prevent *your own* authorization token from being stored in git
-# - custom settings belong *there*
-# - see buildenlights.rc.example
-# shellcheck disable=SC1091
-source ./buildenlights.rc
-
-if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
-    echo "Config required in buildenlights.rc, none of the following can be empty:"
-    echo "OWNER: $REPO_OWNER"
-    echo "REPO: $REPO_NAME"
-    echo "BRANCH: $REFS"
-    echo "AUTHORIZATION: $AUTHORIZATION"
-    exit 1
-fi
-
-# this is a hard requirement
-# - everything else can be replaced or worked around
-if [[ ! -x "${UHUBCTL}" ]]; then
-    echo "Cannot find uhubctl executable."
-    exit 2
-fi
 
 SUCCESS=0
 while true; do
