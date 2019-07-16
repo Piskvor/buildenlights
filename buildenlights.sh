@@ -57,6 +57,7 @@ JQ="$(command -v -- jq)"
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
 # cURL, a data transfer tool - used for HTTPS requests here.
 CURL="$(command -v -- curl)"
+CURL_OPTIONS=(--silent --show-error)
 
 # time in seconds to wait for the API response
 REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
@@ -159,12 +160,12 @@ __api_status_call() {
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" -q || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" -q \
+        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }

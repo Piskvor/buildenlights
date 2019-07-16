@@ -35,6 +35,8 @@ REQUEST_TIMEOUT="5"
 #FALLBACK_PROXY="http://proxy.example.com:3128/"
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
 #FALLBACK_PROXY_REQUEST_TIMEOUT="60"
+# cURL takes various options, configurable here
+#CURL_OPTIONS=(--silent --show-error)
 
 ## ADVANCED: if you need to use an executable in a different path, uncomment the following. This is unusual and shouldn't be needed.
 ##
