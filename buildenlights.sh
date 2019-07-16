@@ -3,7 +3,7 @@
 # ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
-DEBUG=${DEBUG:-0}
+DEBUG=${DEBUG:-1}
 
 set -e # exit on failure
 set -u # fail on unset variables
@@ -63,8 +63,10 @@ REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
 FALLBACK_PROXY=${FALLBACK_PROXY:-}
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
 FALLBACK_PROXY_REQUEST_TIMEOUT=${FALLBACK_PROXY_REQUEST_TIMEOUT:-30}
-# delay between API requests
+# delay between loops
 DELAY_SECONDS=${DELAY_SECONDS:-300}
+# delay between API requests within one iteration
+DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
 
 # override the above defaults
 # - also prevent *your own* authorization token from being stored in git
@@ -76,7 +78,7 @@ if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z 
     echo "Config required in buildenlights.rc, none of the following can be empty:"
     echo "OWNER: $REPO_OWNER"
     echo "REPO: $REPO_NAME"
-    echo "BRANCH: $REFS"
+    echo "REFS: $REFS"
     echo "PERSONAL_ACCESS_TOKEN: $PERSONAL_ACCESS_TOKEN"
     exit 1
 fi
@@ -212,6 +214,10 @@ while true; do
             # even the fallback has failed, handle
             FALLBACK=2
             break
+        fi
+        # floats round down, 0.5 -eq 0
+        if [[ "$DELAY_BETWEEN_REQUESTS" != "0" ]]; then
+            sleep "$DELAY_BETWEEN_REQUESTS"
         fi
         if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
