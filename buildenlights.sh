@@ -194,7 +194,7 @@ while true; do
     BUILD_FAIL_COUNT=0
     SECONDS=0
     RESULT=0
-    for BRANCH in ${REFS}; do
+    while read -r BRANCH; do
         # see https://developer.github.com/v3/repos/statuses/
         URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}/status"
 
@@ -216,7 +216,7 @@ while true; do
         if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
         fi
-    done
+    done < <(echo "${REFS}" | tr ' ' '\n')
 
 
     if [[ "${FALLBACK}" -lt 2 ]]; then
