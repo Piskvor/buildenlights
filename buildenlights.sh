@@ -14,6 +14,16 @@ if [[ "${1:-}" = "--infinite-loop" ]]; then
     shift
 fi
 
+# repo owner and repo name - required, intentionally no default
+REPO_OWNER=
+REPO_NAME=
+# API authorization token, see https://developer.github.com/v3/#authentication
+# - required but intentionally left blank
+AUTHORIZATION=
+# branches/refs to watch for status - one or more, space-separated
+# - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
+REFS="master"
+
 # USB device identifier
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - many motherboards feature switchable hubs, unplugging your input devices is undesirable
@@ -39,6 +49,8 @@ UHUBCTL="$(which uhubctl)"
 JQ="$(which jq)"
 # if array result, get the newest non-pending part, return state; if single result, return its state.
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
+# cURL, a data transfer tool - used for HTTPS requests here.
+CURL="$(which curl)"
 
 # time in seconds to wait for the API response
 REQUEST_TIMEOUT="5"
@@ -48,15 +60,6 @@ FALLBACK_PROXY=""
 FALLBACK_PROXY_REQUEST_TIMEOUT="30"
 # delay between API requests
 DELAY_SECONDS="300"
-# repo owner and repo name - required, intentionally no default
-REPO_OWNER=
-REPO_NAME=
-# branches/refs to watch for status - one or more, space-separated
-# - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
-REFS="master"
-# API authorization token, see https://developer.github.com/v3/#authentication
-# - required but intentionally left blank
-AUTHORIZATION=
 
 # override the above defaults
 # - also prevent *your own* authorization token from being stored in git
@@ -135,12 +138,12 @@ __api_status_call() {
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" curl "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" curl "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q \
+        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
