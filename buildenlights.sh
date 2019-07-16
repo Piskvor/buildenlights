@@ -3,7 +3,7 @@
 # ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
-DEBUG=1
+DEBUG=${DEBUG:-0}
 
 set -e # exit on failure
 set -u # fail on unset variables
@@ -86,6 +86,10 @@ fi
 if [[ ! -x "${UHUBCTL}" ]]; then
     echo "Cannot find uhubctl executable."
     exit 2
+fi
+
+if [[ "$DEBUG" -lt 1 ]]; then
+    set +o xtrace # no more verbosity
 fi
 
 # The following statements define the four on/off functions, unless they were defined previously.
