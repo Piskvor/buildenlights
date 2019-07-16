@@ -3,7 +3,7 @@
 # ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
-DEBUG=${DEBUG:-0}
+DEBUG=${DEBUG:-2}
 
 set -e # exit on failure
 set -u # fail on unset variables
@@ -54,7 +54,7 @@ UHUBCTL="$(command -v -- uhubctl)"
 # jq, a JSON command line processor
 JQ="$(command -v -- jq)"
 # if array result, get the newest non-pending part, return state; if single result, return its state.
-JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
+JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending" and .state != "skipped" and .state != "canceled")) | max_by(.id) | .state else .state end'
 # cURL, a data transfer tool - used for HTTPS requests here.
 CURL="$(command -v -- curl)"
 CURL_OPTIONS=(--silent --show-error)
@@ -145,7 +145,7 @@ __uhubctl_call() {
     fi
 }
 
-# request the ref status from GH
+# request the ref status from API
 # note that a response could be a single result or multiple
 #  - in that case, use the latest
 __api_status_call() {
@@ -239,7 +239,7 @@ while true; do
             __failure_off
             __success_on
             SUCCESS=1
-        elif [[ "${BUILD_STATUS}" = "failure" ]] || [[ "${BUILD_STATUS}" = "error" ]]; then
+        elif [[ "${BUILD_STATUS}" = "failed" ]] || [[ "${BUILD_STATUS}" = "failure" ]] || [[ "${BUILD_STATUS}" = "error" ]]; then
             # disable success light, enable failure light
             __success_off
             __failure_on
