@@ -28,21 +28,21 @@ REFS="master"
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - many motherboards feature switchable hubs, unplugging your input devices is undesirable
 # - this filters by the device's self-identification
-VENDOR="05e3:0608"
-# device location
+USB_DEVICE_ID="05e3:0608"
+# device location (reported by uhubctl in "Current status for hub 2-1.1")
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - same switchable chipsets appear in many end devices
 # - this filters by physical topology
-LOCATION="1-1.3"
+USB_DEVICE_LOCATION=""
 
 # Hub port to switch (optional)
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # - setting to empty or "any" will toggle all ports
 # Here, we use one port for a "success" light...
-PORT_SUCCESS="3"
+USB_PORT_SUCCESS="3"
 # ... and another for a "failure" light.
 # (e.g. in my first setup, only the failure light was present)
-PORT_FAILURE="4"
+USB_PORT_FAILURE="4"
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL="$(which uhubctl)"
 # jq, a JSON command line processor
@@ -86,19 +86,19 @@ fi
 
 # enable the success light
 success_on() {
-    __uhubctl_call 1 "${PORT_SUCCESS}"
+    __uhubctl_call 1 "${USB_PORT_SUCCESS}"
 }
 # disable the success light
 success_off() {
-    __uhubctl_call 0 "${PORT_SUCCESS}"
+    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
 }
 # enable the failure light
 fail_on() {
-    __uhubctl_call 1 "${PORT_FAILURE}"
+    __uhubctl_call 1 "${USB_PORT_FAILURE}"
 }
 # disable the failure light
 fail_off() {
-    __uhubctl_call 0 "${PORT_FAILURE}"
+    __uhubctl_call 0 "${USB_PORT_FAILURE}"
 }
 
 # all uhubctl interaction happens here
@@ -117,9 +117,9 @@ __uhubctl_call() {
     # do not exit on error here (e.g. no hubs matched)
     # be more verbose if debug 2
     if [[ "$DEBUG" -lt 2 ]]; then
-        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" "${PORTS[@]}" &> /dev/null || true
+        "${UHUBCTL}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" &> /dev/null || true
     else
-        "${UHUBCTL}" --vendor "${VENDOR}" --loc "${LOCATION}" --action "${ACTION}" "${PORTS[@]}" || true
+        "${UHUBCTL}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" || true
     fi
 }
 
