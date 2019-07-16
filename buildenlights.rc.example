@@ -3,17 +3,28 @@ REPO_OWNER=Piskvor
 REPO_NAME=buildenlights
 # personal access token, permission "repo"
 # - see https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line
-AUTHORIZATION="token 000000000000000000000000000000000"
+PERSONAL_ACCESS_TOKEN="000000000000000000000000000000000"
+
+# recommended: one or more branches (or other git refs) to watch
+REFS="master develop beta eta/pi feature/some_branch v3.14.1"
 
 ## optional: other variables used in buildenlights.sh
-# branches or other refs to watch
-REFS="master dev alpha beta gamma feature/some_branch v3.14.1"
-# invoke uhubctl without arguments to find the device ID and location
+# invoke uhubctl without arguments to find the device ID and location - the provided examples probably won't work for you
 USB_DEVICE_ID="05e3:0608"
 USB_DEVICE_LOCATION="2-1.4"
 # "-" disables this feature, number selects a port, "any" switches all ports on the selected device
 USB_PORT_SUCCESS="-"
-USB_PORT_FAILURE="6"
+USB_PORT_FAILURE="any"
+# delay between API requests
+DELAY_SECONDS="300"
+
+# advanced: network tweaks and fallback proxy
+# time in seconds to wait for the API response
+#REQUEST_TIMEOUT="20"
+# if the request doesn't return data, retry via proxy (if any)
+#FALLBACK_PROXY="http://proxy.example.com:3128/"
+# time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
+#FALLBACK_PROXY_REQUEST_TIMEOUT="60"
 
 # advanced: if you need to use an executable in a different path, uncomment the following. This is unusual and shouldn't be needed.
 #UHUBCTL=/usr/local/bin/uhubctl.x86

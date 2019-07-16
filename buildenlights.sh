@@ -15,12 +15,13 @@ if [[ "${1:-}" = "--infinite-loop" ]]; then
     shift
 fi
 
-# repo owner and repo name - required, intentionally no default
+# repo owner and repo name
+# - required, intentionally no default
 REPO_OWNER=
 REPO_NAME=
 # API authorization token, see https://developer.github.com/v3/#authentication
 # - required but intentionally left blank
-AUTHORIZATION=
+PERSONAL_ACCESS_TOKEN=
 # branches/refs to watch for status - one or more, space-separated
 # - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
 REFS="master"
@@ -34,7 +35,7 @@ USB_DEVICE_ID="05e3:0608"
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - same switchable chipsets appear in many end devices
 # - this filters by physical topology
-USB_DEVICE_LOCATION=""
+USB_DEVICE_LOCATION="1-1.3"
 
 # Hub port to switch (optional)
 # - setting to empty or "any" will toggle all ports
@@ -68,12 +69,12 @@ DELAY_SECONDS="300"
 # - see buildenlights.rc.example
 source ./buildenlights.rc
 
-if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
+if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$PERSONAL_ACCESS_TOKEN" ]]; then
     echo "Config required in buildenlights.rc, none of the following can be empty:"
     echo "OWNER: $REPO_OWNER"
     echo "REPO: $REPO_NAME"
     echo "BRANCH: $REFS"
-    echo "AUTHORIZATION: $AUTHORIZATION"
+    echo "PERSONAL_ACCESS_TOKEN: $PERSONAL_ACCESS_TOKEN"
     exit 1
 fi
 
@@ -148,12 +149,12 @@ __api_status_call() {
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: ${AUTHORIZATION}" "${URL}" -q || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" -q || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: ${AUTHORIZATION}" "${URL}" -q \
+        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" -q \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
