@@ -55,3 +55,28 @@ Shows a literal green or red light according to build status.
 - Nohup: `nohup buildenlights.sh --infinite-loop &` - doesn't exit with terminal
 - Cron or similar scheduler: `*/10 * * * * * /home/your/path/buildenlights.sh > /dev/null 2> /dev/null` - ignores the `DELAY_SECONDS` variable
 - Systemd: example units are provided in `systemd-example/`, one which loops via systemd, other looping internally 
+
+## Advanced config
+
+- Variables can be passed in environment (but rcfile would still override them)
+- Usual proxying via ENV vars works; there's also `FALLBACK_PROXY` for cases when direct connection is broken, but HTTP proxy access is still possible (my specific use case)
+- if binaries are outside `PATH`, they can be specified through `UHUBCTL`,`CURL`, and `JQ`.
+
+### Expert: overriding the result functions
+
+If specific functionality is required, the result functions can be defined in `buildenlights.rc`. Those will be called *instead* of the default ones, so if the default functionality is required, it must be copied there.
+
+This applies to 4 result functions ((success|failure)×(on|off)) and 2 API calls' results: 
+ - `__success_on` (turn on green light)
+ - `__success_off` (turn off green light)
+ - `__failure_on` (turn on red light)
+ - `__failure_off` (turn off red light)
+ - `__api_status_finished` (API calls have completed)
+ - `__api_status_error` (API access had at least one error) 
+
+## TL;DR:
+
+ - check that your `uhubctl` works
+ - create `buildenlights.rc` with `REPO_OWNER`, `REPO_NAME`, `PERSONAL_ACCESS_TOKEN` and `USB_DEVICE_LOCATION`
+ - run `./buildenlights.sh --infinite-loop`
+ - watch the blinkenlights
