@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
 DEBUG=1
@@ -36,12 +37,12 @@ USB_DEVICE_ID="05e3:0608"
 USB_DEVICE_LOCATION=""
 
 # Hub port to switch (optional)
-# - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # - setting to empty or "any" will toggle all ports
+# - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
+# (e.g. in my first setup, only the failure light was present)
 # Here, we use one port for a "success" light...
 USB_PORT_SUCCESS="3"
 # ... and another for a "failure" light.
-# (e.g. in my first setup, only the failure light was present)
 USB_PORT_FAILURE="4"
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL="$(which uhubctl)"
@@ -65,7 +66,6 @@ DELAY_SECONDS="300"
 # - also prevent *your own* authorization token from being stored in git
 # - custom settings belong *there*
 # - see buildenlights.rc.example
-# shellcheck disable=SC1091
 source ./buildenlights.rc
 
 if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$AUTHORIZATION" ]]; then
