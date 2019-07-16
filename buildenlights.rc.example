@@ -6,17 +6,30 @@ REPO_NAME=buildenlights
 AUTHORIZATION="token 000000000000000000000000000000000"
 
 ## optional: other variables used in buildenlights.sh
-
 # branches or other refs to watch
 REFS="master dev alpha beta gamma feature/some_branch v3.14.1"
-
 # invoke uhubctl without arguments to find the device ID and location
 USB_DEVICE_ID="05e3:0608"
 USB_DEVICE_LOCATION="2-1.4"
-
 # "-" disables this feature, number selects a port, "any" switches all ports on the selected device
 USB_PORT_SUCCESS="-"
 USB_PORT_FAILURE="6"
 
-# if you need to use an executable in a different path, do so here. This is unusual and shouldn't be needed.
-UHUBCTL=/usr/local/bin/uhubctl.x86
+# advanced: if you need to use an executable in a different path, uncomment the following. This is unusual and shouldn't be needed.
+#UHUBCTL=/usr/local/bin/uhubctl.x86
+#CURL=/somewhere/curl
+#JQ=/home/user/bin/jq-latest
+
+# expert: define any of your own success/failure on/off function(s). If defined, they will be used instead of the default.
+#__success_on() {
+#    wall "Good news everyone!"
+#    __uhubctl_call 1 "${USB_PORT_SUCCESS}"
+#    echo "on" >> /tmp/on.log
+#}
+#
+#__failure_on() {
+#    wall "I suggest we take off and nuke the entire site from orbit."
+#    __uhubctl_call 1 "${USB_PORT_FAILURE}"
+#    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
+#}
+

@@ -13,8 +13,12 @@ Shows a literal green or red light according to build status.
 ## Operation
 
 - USB hub is connected to a computer
-- lights connected to hub
+- lights are connected to the hub
 - buildenlights runs in a loop or periodically
    - checks GitHub repo status (using curl+jq)
    - if status is "success", turns green light on (using uhubctl)
    - if status is "failed", turns red light on (using uhubctl)
+
+## Configuration
+
+- 

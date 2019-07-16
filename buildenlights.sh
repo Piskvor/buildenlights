@@ -84,23 +84,33 @@ if [[ ! -x "${UHUBCTL}" ]]; then
     exit 2
 fi
 
-# enable the success light
-success_on() {
-    __uhubctl_call 1 "${USB_PORT_SUCCESS}"
-}
-# disable the success light
-success_off() {
-    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
-}
-# enable the failure light
-fail_on() {
-    __uhubctl_call 1 "${USB_PORT_FAILURE}"
-}
-# disable the failure light
-fail_off() {
-    __uhubctl_call 0 "${USB_PORT_FAILURE}"
-}
-
+# The following statements define the four on/off functions, unless they were defined previously.
+# This means that each of the functions can be defined in ./buildenlights.rc, overriding the default behavior.
+# The default functions are simplest possible - they only call the uhubctl control functions.
+if [[ "$(type -t __success_on)" != 'function' ]]; then
+    # enable the success light
+    __success_on() {
+        __uhubctl_call 1 "${USB_PORT_SUCCESS}"
+    }
+fi
+if [[ "$(type -t __success_off)" != 'function' ]]; then
+    # disable the success light
+    __success_off() {
+        __uhubctl_call 0 "${USB_PORT_SUCCESS}"
+    }
+fi
+if [[ "$(type -t __failure_on)" != 'function' ]]; then
+    # enable the failure light
+    __failure_on() {
+        __uhubctl_call 1 "${USB_PORT_FAILURE}"
+    }
+fi
+if [[ "$(type -t __failure_off)" != 'function' ]]; then
+    # disable the failure light
+    __failure_off() {
+        __uhubctl_call 0 "${USB_PORT_FAILURE}"
+    }
+fi
 # all uhubctl interaction happens here
 __uhubctl_call() {
     ACTION="${1}"
@@ -199,18 +209,18 @@ while true; do
         echo "Result: ${BUILD_STATUS}"
         if [[ "$BUILD_FAIL_COUNT" -eq 0 ]]; then
             # disable failure light, enable success light
-            fail_off
-            success_on
+            __failure_off
+            __success_on
             SUCCESS=1
         elif [[ "${BUILD_STATUS}" = "failure" ]] || [[ "${BUILD_STATUS}" = "error" ]]; then
             # disable success light, enable failure light
-            success_off
-            fail_on
+            __success_off
+            __failure_on
             SUCCESS=0
         else
             # unrecognized state (e.g. pending?), disable both lights
-            success_off
-            fail_off
+            __success_off
+            __failure_off
         fi
 
         # pass the last known success state and current build status
@@ -218,8 +228,8 @@ while true; do
 
     else
         # error state (e.g. API not responding?), disable both lights and try to recover
-        success_off
-        fail_off
+        __success_off
+        __failure_off
         __api_status_error "${SUCCESS}"
     fi
 
