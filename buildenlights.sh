@@ -3,7 +3,7 @@
 # ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
-DEBUG=${DEBUG:-1}
+DEBUG=${DEBUG:-0}
 
 set -e # exit on failure
 set -u # fail on unset variables
@@ -168,28 +168,32 @@ __api_status_call() {
     fi
 }
 
-__api_status_finished() {
-    # called when all the API calls finish, SUCCESS_STATE is passed to reflect the content of the calls
+if [[ "$(type -t __api_status_finished)" != 'function' ]]; then
+    __api_status_finished() {
+        # called when all the API calls finish, SUCCESS_STATE is passed to reflect the content of the calls
 
-    # we currently ignore SUCCESS_STATE in $1, just wait for next run.
-    # do not delay if not looping internally, though
-    if [[ "${DO_LOOP}" -gt 0 ]]; then
-        echo "sleep ${DELAY_SECONDS}..."
-        sleep "${DELAY_SECONDS}" || true
-    fi
-}
+        # we currently ignore SUCCESS_STATE in $1, just wait for next run.
+        # do not delay if not looping internally, though
+        if [[ "${DO_LOOP}" -gt 0 ]]; then
+            echo "sleep ${DELAY_SECONDS}..."
+            sleep "${DELAY_SECONDS}" || true
+        fi
+    }
+fi
 
-__api_status_error() {
-    # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
+if [[ "$(type -t __api_status_error)" != 'function' ]]; then
+    __api_status_error() {
+        # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
 
-    # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
-    # do not delay if not looping internally, though
-    if [[ "${DO_LOOP}" -gt 0 ]]; then
-        LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
-        echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
-        sleep "${LONGER_SLEEP}" || true
-    fi
-}
+        # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
+        # do not delay if not looping internally, though
+        if [[ "${DO_LOOP}" -gt 0 ]]; then
+            LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
+            echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
+            sleep "${LONGER_SLEEP}" || true
+        fi
+    }
+fi
 
 SUCCESS=0
 while true; do
@@ -201,14 +205,14 @@ while true; do
         URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}/status"
 
         FALLBACK=0
-        BUILD_STATUS=$(__api_status_call ${FALLBACK} "${URL}") || FALLBACK=1
+        BUILD_STATUS=$(__api_status_call "${FALLBACK}" "${URL}") || FALLBACK=1
         if [[ -z "${BUILD_STATUS}" ]]; then
             FALLBACK=1
         fi
 
-        if [[ ${FALLBACK} -gt 0 ]] && [[ "${FALLBACK_PROXY:-}" != "" ]]; then
+        if [[ ${FALLBACK} -gt 0 ]] && [[ -z "${FALLBACK_PROXY}" ]]; then
             echo "Failed, retrying with ${FALLBACK_PROXY}"
-            BUILD_STATUS=$(__api_status_call ${FALLBACK} "${URL}") || FALLBACK=2
+            BUILD_STATUS=$(__api_status_call "${FALLBACK}" "${URL}") || FALLBACK=2
         fi
         if [[ -z "${BUILD_STATUS}" ]]; then
             # even the fallback has failed, handle
