@@ -6,14 +6,14 @@ Shows a literal green or red light according to project's GitHub/GitLab build st
 - USB hub is connected to a computer
 - USB lights are connected to the hub
 - `buildenlights` runs in a loop or periodically
-   - checks GitHub repo status (using curl+jq)
+   - checks GitHub/GitLab repo status (using curl+jq)
    - if status of all branches is "success", turns green light on (using uhubctl)
    - if status of any branch is "failed", turns red light on (using uhubctl)
    - if the checks fail (e.g. network unreachable), turns both lights off.
 
 ## Requirements
 
-- a computer/device running Linux, OSX or similar UN*Xlike (uhubctl apparently has [no Windows support](https://github.com/mvp/uhubctl/issues/79))
+- a computer/device running Linux, OSX or similar UN*X-like (uhubctl apparently has [no Windows support](https://github.com/mvp/uhubctl/issues/79))
 - a switchable USB hub (see [a list of working devices](https://github.com/mvp/uhubctl#user-content-compatible-usb-hubs) for a recommended list) - note that some devices already have a hub integrated (e.g. RPi 3B+)
 - two lights (e.g. green and red, one to indicate success, the other for failure), to plug into the hub (one is necessary, two are better)
 - bash
