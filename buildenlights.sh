@@ -163,8 +163,11 @@ __api_status_finished() {
     # called when all the API calls finish, SUCCESS_STATE is passed to reflect the content of the calls
 
     # we currently ignore SUCCESS_STATE in $1, just wait for next run.
-    echo "sleep ${DELAY_SECONDS}..."
-    sleep "${DELAY_SECONDS}" || true
+    # do not delay if not looping internally, though
+    if [[ "${DO_LOOP}" -gt 0 ]]; then
+        echo "sleep ${DELAY_SECONDS}..."
+        sleep "${DELAY_SECONDS}" || true
+    fi
 }
 
 __api_status_error() {
@@ -180,6 +183,7 @@ SUCCESS=0
 while true; do
     BUILD_FAIL_COUNT=0
     SECONDS=0
+    RESULT=0
     for BRANCH in ${REFS}; do
         # see https://developer.github.com/v3/repos/statuses/
         URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}/status"
@@ -232,10 +236,11 @@ while true; do
         __success_off
         __failure_off
         __api_status_error "${SUCCESS}"
+        RESULT=3
     fi
 
     # we can quit the script by setting this variable to 0, e.g. in a handler
     if [[ "${DO_LOOP}" -eq 0 ]]; then
-        break;
+        exit ${RESULT}
     fi
 done
