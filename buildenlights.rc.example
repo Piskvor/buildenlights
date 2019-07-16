@@ -2,13 +2,22 @@
 # shellcheck disable=SC2034
 # ^^^ disable "unused variable" warning
 
-## REQUIRED: repo owner, repo name, authorization token
-##
-REPO_OWNER=Piskvor
-REPO_NAME=buildenlights
-# personal access token, permission "repo"
+## REQUIRED: GitLab Project ID, GitLab Personal Access Token
+## OR: GitHub repo name, GitHub Personal Access Token
+### NOTE! Only one can exist for the same script, if both, script will stop.
+## Comment out the one you're not using
+GITLAB_PROJECT_ID=13340096
+GITHUB_REPO_NAME=Piskvor/buildenlights
+
+# GitLab personal access token, permission "api"
+# - see https://gitlab.com/profile/personal_access_tokens
+GITLAB_PERSONAL_ACCESS_TOKEN="aAaAaaAAAAAaaa"
+# GitLab domain - for self-hosted instances
+#GITLAB_DOMAIN=gitlab.com
+
+# GitHub personal access token, permission "repo"
 # - see https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line
-PERSONAL_ACCESS_TOKEN="000000000000000000000000000000000"
+GITHUB_PERSONAL_ACCESS_TOKEN="000000000000000000000000000000000"
 
 ## RECOMMENDED: one or more branches (or other git refs) to watch
 ##

@@ -18,13 +18,24 @@ if [[ "${1:-}" = "--infinite-loop" ]]; then
     shift
 fi
 
-# repo owner and repo name
+## NOTE: you can't have a GitHub and GitLab repo in the same script; if both are present, the script will refuse to run.
+
+# GitLab project ID
 # - required, intentionally no default
-REPO_OWNER=${REPO_OWNER:-}
-REPO_NAME=${REPO_NAME:-}
+GITLAB_PROJECT_ID=${GITLAB_PROJECT_ID:-}
+# API authorization token, see https://gitlab.com/profile/personal_access_tokens
+# - required but intentionally left blank
+GITLAB_PERSONAL_ACCESS_TOKEN=${GITLAB_PERSONAL_ACCESS_TOKEN:-}
+# GitLab domain - for self-hosted instances
+GITLAB_DOMAIN=${GITLAB_DOMAIN:-gitlab.com}
+
+# GitHub repo owner and repo name
+# - required, intentionally no default
+GITHUB_REPO_NAME=${GITHUB_REPO_NAME:-}
 # API authorization token, see https://developer.github.com/v3/#authentication
 # - required but intentionally left blank
-PERSONAL_ACCESS_TOKEN=${PERSONAL_ACCESS_TOKEN:-}
+GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN:-}
+
 # branches/refs to watch for status - one or more, space-separated
 # - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
 REFS=${REFS:-}
@@ -76,13 +87,30 @@ DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
 # - see buildenlights.rc.example
 source ./buildenlights.rc
 
-if [[ -z "$REPO_OWNER" ]] || [[ -z "$REPO_NAME" ]] || [[ -z "$REFS" ]] || [[ -z "$PERSONAL_ACCESS_TOKEN" ]]; then
-    echo "Config required in buildenlights.rc, none of the following can be empty:"
-    echo "OWNER: $REPO_OWNER"
-    echo "REPO: $REPO_NAME"
-    echo "REFS: $REFS"
-    echo "PERSONAL_ACCESS_TOKEN: $PERSONAL_ACCESS_TOKEN"
-    exit 1
+if [[ -n "$GITLAB_PROJECT_ID" ]] && [[ -n "$GITHUB_REPO_NAME" ]]; then
+    echo "Cannot work with both GitLab and GitHub in the same script, sorry"
+    exit 4
+fi
+
+if [[ -n "$GITHUB_REPO_NAME" ]] ; then
+    if [[ -z "$REFS" ]] || [[ -z "$GITHUB_PERSONAL_ACCESS_TOKEN" ]]; then
+        echo "Config required in buildenlights.rc, none of the following can be empty:"
+        echo "REFS: $REFS"
+        echo "GITHUB_REPO_NAME: $GITHUB_REPO_NAME"
+        echo "GITHUB_PERSONAL_ACCESS_TOKEN: $GITHUB_PERSONAL_ACCESS_TOKEN"
+        exit 1
+    fi
+elif [[ -n "$GITLAB_PROJECT_ID" ]] ; then
+    if [[ -z "$REFS" ]] || [[ -z "$GITLAB_PERSONAL_ACCESS_TOKEN" ]]; then
+        echo "Config required in buildenlights.rc, none of the following can be empty:"
+        echo "REFS: $REFS"
+        echo "GITLAB_PROJECT_ID: $GITLAB_PROJECT_ID"
+        echo "GITLAB_PERSONAL_ACCESS_TOKEN: $GITLAB_PERSONAL_ACCESS_TOKEN"
+        exit 1
+    fi
+else
+    echo "Must have either GitLab OR GitHub credentials in the script, sorry"
+    exit 5
 fi
 
 # this is a hard requirement
@@ -145,9 +173,23 @@ __uhubctl_call() {
     fi
 }
 
+# get the API URL - this differs for GL and GH
+__get_url() {
+    GITLAB_PROJECT_ID="${1:-}"
+    GITHUB_REPO_NAME="${2:-}"
+    BRANCH="${3:-}"
+    # see https://developer.github.com/v3/repos/statuses/
+    if [[ -n "$GITLAB_PROJECT_ID" ]]; then
+        echo "https://${GITLAB_DOMAIN}/api/v4/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}"
+    elif [[ -n "$GITHUB_REPO_NAME" ]]; then
+        echo "https://api.github.com/repos/${GITHUB_REPO_NAME}/commits/${BRANCH}/status"
+    fi
+}
+
 # request the ref status from API
 # note that a response could be a single result or multiple
 #  - in that case, use the latest
+#  - there's some sed mangling to have GL and GH report the same field (status/state)
 __api_status_call() {
     FALLBACK="${1}"
     URL="${2}"
@@ -160,12 +202,12 @@ __api_status_call() {
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}" "${URL}" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" \
+        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}" "${URL}" \
         | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
@@ -203,8 +245,7 @@ while true; do
     SECONDS=0
     RESULT=0
     while read -r BRANCH; do
-        # see https://developer.github.com/v3/repos/statuses/
-        URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}/status"
+        URL="$(__get_url "${GITLAB_PROJECT_ID}" "${GITHUB_REPO_NAME}" "${BRANCH}")"
 
         FALLBACK=0
         BUILD_STATUS=$(__api_status_call "${FALLBACK}" "${URL}") || FALLBACK=1
