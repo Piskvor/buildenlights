@@ -17,7 +17,7 @@ REFS="master develop beta eta/pi feature/some_branch v3.14.1"
 ## OPTIONAL: other variables used in buildenlights.sh
 ##
 # invoke uhubctl without arguments to find the device ID and location - the provided examples probably won't work for you
-USB_DEVICE_ID="05e3:0608"
+USB_DEVICE_ID=""
 USB_DEVICE_LOCATION="2-1.4"
 # "-" disables this feature, number selects a port, "any" switches all ports on the selected device
 USB_PORT_SUCCESS="-"
