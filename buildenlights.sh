@@ -174,9 +174,12 @@ __api_status_error() {
     # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
 
     # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
-    LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
-    echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
-    sleep "${LONGER_SLEEP}" || true
+    # do not delay if not looping internally, though
+    if [[ "${DO_LOOP}" -gt 0 ]]; then
+        LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
+        echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
+        sleep "${LONGER_SLEEP}" || true
+    fi
 }
 
 SUCCESS=0
