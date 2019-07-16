@@ -40,6 +40,7 @@ USB_DEVICE_ID=${USB_DEVICE_ID:-}
 # - this filters by physical topology
 USB_DEVICE_LOCATION=${USB_DEVICE_LOCATION:-}
 
+
 # Hub port to switch (optional)
 # - setting to empty or "any" will toggle all ports
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
@@ -132,7 +133,7 @@ __uhubctl_call() {
             # ignore this call
             return
         fi
-        PORTS=(--ports ${2})
+        PORTS=(--ports "${2}")
     fi
     # do not exit on error here (e.g. no hubs matched)
     # be more verbose if debug 2
@@ -154,7 +155,7 @@ __api_status_call() {
         PROXY=()
     else
         TIMEOUT="${FALLBACK_PROXY_REQUEST_TIMEOUT}"
-        PROXY=(--proxy ${FALLBACK_PROXY})
+        PROXY=(--proxy "${FALLBACK_PROXY}")
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
