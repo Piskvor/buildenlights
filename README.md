@@ -17,6 +17,7 @@ Shows a literal green or red light according to build status.
 - a switchable USB hub (see [a list of working devices](https://github.com/mvp/uhubctl#user-content-compatible-usb-hubs) for a recommended list) - note that some devices already have a hub integrated (e.g. RPi 3B+)
 - two lights (e.g. green and red, one to indicate success, the other for failure), to plug into the hub (one is necessary, two are better)
 - bash
+- sed
 - [uhubctl](https://github.com/mvp/uhubctl#user-content-compiling) to switch the USB ports on and off
 - [curl](https://curl.haxx.se/) for requesting the repo status
 - [jq](https://stedolan.github.io/jq/) for parsing the status result

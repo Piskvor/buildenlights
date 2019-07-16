@@ -163,10 +163,10 @@ __api_status_call() {
         STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
-        | ${JQ} --raw-output "${JQ_SCRIPT}"
+        | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
         (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" "${URL}" \
-        | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
+        | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
 
