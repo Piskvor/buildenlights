@@ -138,12 +138,12 @@ __api_status_call() {
     fi
 
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: ${AUTHORIZATION}" "${URL}" -q || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H 'cache-control: max-age=0' -H "authorization: ${AUTHORIZATION}" "${URL}" -q \
+        (timeout "${TIMEOUT}" "${CURL}" "${PROXY[@]}" -H "Authorization: ${AUTHORIZATION}" "${URL}" -q \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
