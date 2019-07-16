@@ -12,7 +12,7 @@ if [[ "$DEBUG" -ge 1 ]]; then
     set -o xtrace # be extra verbose for debugging
 fi
 
-DO_LOOP=0
+DO_LOOP=${DO_LOOP:-0}
 if [[ "${1:-}" = "--infinite-loop" ]]; then
     DO_LOOP=1
     shift
@@ -20,34 +20,34 @@ fi
 
 # repo owner and repo name
 # - required, intentionally no default
-REPO_OWNER=
-REPO_NAME=
+REPO_OWNER=${REPO_OWNER:-}
+REPO_NAME=${REPO_NAME:-}
 # API authorization token, see https://developer.github.com/v3/#authentication
 # - required but intentionally left blank
-PERSONAL_ACCESS_TOKEN=
+PERSONAL_ACCESS_TOKEN=${PERSONAL_ACCESS_TOKEN:-}
 # branches/refs to watch for status - one or more, space-separated
 # - for multiple branches, the entire set must be quoted, e.g. "devel foo/bar alpha"
-REFS="master"
+REFS=${REFS:-}
 
 # USB device identifier
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - many motherboards feature switchable hubs, unplugging your input devices is undesirable
 # - this filters by the device's self-identification
-USB_DEVICE_ID="05e3:0608"
+USB_DEVICE_ID=${USB_DEVICE_ID:-}
 # device location (reported by uhubctl in "Current status for hub 2-1.1")
 # - optional but recommended; if unspecified, all matching hubs will be switched
 # - same switchable chipsets appear in many end devices
 # - this filters by physical topology
-USB_DEVICE_LOCATION="1-1.3"
+USB_DEVICE_LOCATION=${USB_DEVICE_LOCATION:-}
 
 # Hub port to switch (optional)
 # - setting to empty or "any" will toggle all ports
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # (e.g. in my first setup, only the failure light was present)
 # Here, we use one port for a "success" light...
-USB_PORT_SUCCESS="3"
+USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-}
 # ... and another for a "failure" light.
-USB_PORT_FAILURE="4"
+USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL="$(which uhubctl)"
 # jq, a JSON command line processor
@@ -58,13 +58,13 @@ JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_b
 CURL="$(which curl)"
 
 # time in seconds to wait for the API response
-REQUEST_TIMEOUT="5"
+REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
 # if the request doesn't return data, retry via proxy (if any)
-FALLBACK_PROXY=""
+FALLBACK_PROXY=${FALLBACK_PROXY:-}
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
-FALLBACK_PROXY_REQUEST_TIMEOUT="30"
+FALLBACK_PROXY_REQUEST_TIMEOUT=${FALLBACK_PROXY_REQUEST_TIMEOUT:-30}
 # delay between API requests
-DELAY_SECONDS="300"
+DELAY_SECONDS=${DELAY_SECONDS:-300}
 
 # override the above defaults
 # - also prevent *your own* authorization token from being stored in git
