@@ -50,13 +50,13 @@ USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-}
 # ... and another for a "failure" light.
 USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
-UHUBCTL="$(which uhubctl)"
+UHUBCTL="$(command -v -- uhubctl)"
 # jq, a JSON command line processor
-JQ="$(which jq)"
+JQ="$(command -v -- jq)"
 # if array result, get the newest non-pending part, return state; if single result, return its state.
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending")) | max_by(.updated_at) | .state else .state end'
 # cURL, a data transfer tool - used for HTTPS requests here.
-CURL="$(which curl)"
+CURL="$(command -v -- curl)"
 
 # time in seconds to wait for the API response
 REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
