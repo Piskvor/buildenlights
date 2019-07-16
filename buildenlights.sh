@@ -1,12 +1,15 @@
 #!/bin/bash
 # shellcheck disable=SC1091
+# ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
 DEBUG=1
 
-set -euo pipefail
+set -e # exit on failure
+set -u # fail on unset variables
+set -o pipefail # fail when a part of the pipeline fails
 if [[ "$DEBUG" -ge 1 ]]; then
-    set -o xtrace # extra verbose for debugging
+    set -o xtrace # be extra verbose for debugging
 fi
 
 DO_LOOP=0
