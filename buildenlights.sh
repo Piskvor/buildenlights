@@ -203,16 +203,28 @@ __api_status_call() {
         PROXY=(--proxy "${FALLBACK_PROXY}")
     fi
 
+    # note that we're passing the auth header by heredoc - this prevents it from appearing directly in the commandline
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}" "${URL}" || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}" "${URL}" \
+        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" \
         | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
+
+if [[ "$(type -t __get_auth_header)" != 'function' ]]; then
+    # return authorization header in GL/GH format
+    __get_auth_header() {
+        if [[ -n "$GITLAB_PERSONAL_ACCESS_TOKEN" ]]; then
+            echo "PRIVATE-TOKEN: ${GITLAB_PERSONAL_ACCESS_TOKEN}"
+        elif [[ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]]; then
+            echo "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+        fi
+    }
+fi
 
 if [[ "$(type -t __api_status_finished)" != 'function' ]]; then
     __api_status_finished() {
