@@ -53,7 +53,6 @@ USB_DEVICE_ID=${USB_DEVICE_ID:-}
 # - this filters by physical topology
 USB_DEVICE_LOCATION=${USB_DEVICE_LOCATION:-}
 
-
 # Hub port to switch (optional)
 # - setting to empty or "any" will toggle all ports
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
@@ -133,6 +132,7 @@ fi
 
 # curl 7.55.0 can pass in a header via STDIN
 # - this means it's not directly visible; unfortunately, not very widespread on ARM
+# TODO: detect this in a saner way
 __PASS_HEADER_STDIN=0
 if [[ "$("${CURL[@]}" --help | grep -- '--header' || true)" =~ '@' ]]; then
     __PASS_HEADER_STDIN=1
@@ -221,9 +221,9 @@ __api_status_call() {
     if [[ ${__PASS_HEADER_STDIN} -eq 0 ]]; then
         AUTH_HEADER_PARAM="$AUTH_HEADER"
     else
+        # if we have a recent enough curl, pass the auth header by heredoc - this prevents it from appearing directly in the commandline
         AUTH_HEADER_PARAM="@-"
     fi
-    # note that we're passing the auth header by heredoc - this prevents it from appearing directly in the commandline
     if [[ "$DEBUG" -ge 2 ]]; then
         STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
         echo "${STATUS_DATA}" > /dev/stderr
