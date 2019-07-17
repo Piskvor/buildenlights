@@ -3,7 +3,7 @@
 # ^^^ disable "Not following ./buildenlights.rc"
 
 # set to 0 for less output, set to 2 for a lot of output, set to 1 for something in between
-DEBUG=${DEBUG:-2}
+DEBUG=${DEBUG:-0}
 
 set -e # exit on failure
 set -u # fail on unset variables
@@ -182,7 +182,7 @@ __get_url() {
     BRANCH="${3:-}"
     # see https://developer.github.com/v3/repos/statuses/
     if [[ -n "$GITLAB_PROJECT_ID" ]]; then
-        echo "https://${GITLAB_DOMAIN}/api/v4/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}"
+        echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}"
     elif [[ -n "$GITHUB_REPO_NAME" ]]; then
         echo "https://api.github.com/repos/${GITHUB_REPO_NAME}/commits/${BRANCH}/status"
     fi
