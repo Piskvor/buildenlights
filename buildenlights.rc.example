@@ -12,7 +12,7 @@ GITHUB_REPO_NAME=Piskvor/buildenlights
 # GitLab personal access token, permission "api"
 # - see https://gitlab.com/profile/personal_access_tokens
 GITLAB_PERSONAL_ACCESS_TOKEN="aAaAaaAAAAAaaa"
-# GitLab domain - for self-hosted instances
+# GitLab domain - uncomment for self-hosted instances
 #GITLAB_DOMAIN=gitlab.com
 
 # GitHub personal access token, permission "repo"
@@ -32,14 +32,14 @@ USB_DEVICE_LOCATION="2-1.4"
 USB_PORT_SUCCESS="-"
 USB_PORT_FAILURE="any"
 
-## INTERMEDIATE: network tweaks and fallback proxy
+## INTERMEDIATE: network tweaks and fallback proxy - uncomment to use
 ##
 # delay between iterations
-DELAY_SECONDS="300"
+#DELAY_SECONDS="300"
 # delay between requests inside one iteration
-DELAY_BETWEEN_REQUESTS="0"
+#DELAY_BETWEEN_REQUESTS="0"
 # time in seconds to wait for the API response
-REQUEST_TIMEOUT="5"
+#REQUEST_TIMEOUT="5"
 # if the request doesn't return data, retry via proxy (if any)
 #FALLBACK_PROXY="http://proxy.example.com:3128/"
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
@@ -67,3 +67,6 @@ REQUEST_TIMEOUT="5"
 #    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
 #}
 
+## EXPERT: redefine the JQ script which transforms the JSON returned from API into a string "success"/"failed"/"failure"/* (where anything else is an error)
+##
+#JQ_SCRIPT='if . | type == "array" then map({"st": (try (.state) + try (.status)),id} | select (.st != "running" and .st != "pending" and .st != "skipped" and .st != "canceled")) | max_by(.id) | .st else (try(.state) + try(.status)) end'

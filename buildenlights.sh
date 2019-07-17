@@ -66,8 +66,13 @@ USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
 UHUBCTL="$(command -v -- uhubctl)"
 # jq, a JSON command line processor
 JQ="$(command -v -- jq)"
-# if array result, get the newest completed part, return state; if single result, return its state.
-JQ_SCRIPT='if . | type == "array" then map({"st": (try (.state) + try (.status)),id} | select (.st != "pending" and .st != "skipped" and .st != "canceled")) | max_by(.id) | .st else (try(.state) + try(.status)) end'
+# JQ script to transform the received JSON into a single string value
+JQ_SCRIPT=${JQ_SCRIPT:-}
+if [[ -z "$JQ_SCRIPT" ]]; then
+    # if array result, get the newest completed part, return state; if single result, return its state.
+    # note that we need to check both for "state" and "status", as GL and GH's output is almost, but not quite, similar.
+    JQ_SCRIPT='if . | type == "array" then map({"st": (try (.state) + try (.status)),id} | select (.st != "running" and .st != "pending" and .st != "skipped" and .st != "canceled")) | max_by(.id) | .st else (try(.state) + try(.status)) end'
+fi
 # cURL, a data transfer tool - used for HTTPS requests here.
 CURL="$(command -v -- curl)"
 CURL_OPTIONS=(--silent --show-error)
@@ -182,7 +187,7 @@ __get_url() {
     BRANCH="${3:-}"
     # see https://developer.github.com/v3/repos/statuses/
     if [[ -n "$GITLAB_PROJECT_ID" ]]; then
-        echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}"
+        echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}&scope=finished"
     elif [[ -n "$GITHUB_REPO_NAME" ]]; then
         echo "https://api.github.com/repos/${GITHUB_REPO_NAME}/commits/${BRANCH}/status"
     fi
