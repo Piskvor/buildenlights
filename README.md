@@ -1,5 +1,5 @@
 # buildenlights
-Shows a literal green or red light according to project's GitHub/GitLab build status.
+Shows a literal green or red light according to project's GitLab/GitHub build status.
 
 ## Overview
 
@@ -45,7 +45,7 @@ Shows a literal green or red light according to project's GitHub/GitLab build st
     - Copy the token
     
 - Copy buildenlights.rc.example to buildenlights.rc and edit the config
-    - `GITLAB_PROJECT_ID`and `GITLAB_PERSONAL_ACCESS_TOKEN` are required for GH access
+    - `GITLAB_PROJECT_ID`and `GITLAB_PERSONAL_ACCESS_TOKEN` are required for GL access
     - `GITHUB_REPO_NAME`and `GITHUB_PERSONAL_ACCESS_TOKEN` are required for GH access
     - Using both at once will stop the script
     - `REFS` is a list of branches (or other [git-refs](https://git-scm.com/book/en/v2/Git-Internals-Git-References)) to watch - they will be checked in order. Note that they're space-separated.
@@ -63,7 +63,7 @@ Shows a literal green or red light according to project's GitHub/GitLab build st
 ## Advanced config
 
 - Variables can be passed in environment (but rcfile would still override them)
-- Usual proxying via ENV vars works; there's also `FALLBACK_PROXY` for cases when direct connection is broken, but HTTP proxy access is still possible (my specific use case)
+- Usual proxying HTTP(S) requests via ENV vars (`http_proxy`,`https_proxy`) works; there's also `FALLBACK_PROXY` for cases when direct connection is broken, but HTTP proxy access is still possible (my specific use case)
 - if binaries are outside `PATH`, they can be specified through `UHUBCTL`,`CURL`, and `JQ`.
 
 ### Expert: overriding the result functions

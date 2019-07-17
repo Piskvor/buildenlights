@@ -23,8 +23,9 @@ fi
 # GitLab project ID
 # - required, intentionally no default
 GITLAB_PROJECT_ID=${GITLAB_PROJECT_ID:-}
-# API authorization token, see https://gitlab.com/profile/personal_access_tokens
+# GitLab API authorization token, see https://gitlab.com/profile/personal_access_tokens
 # - required but intentionally left blank
+# - permission scope: "api"
 GITLAB_PERSONAL_ACCESS_TOKEN=${GITLAB_PERSONAL_ACCESS_TOKEN:-}
 # GitLab domain - for self-hosted instances
 GITLAB_DOMAIN=${GITLAB_DOMAIN:-gitlab.com}
@@ -32,8 +33,9 @@ GITLAB_DOMAIN=${GITLAB_DOMAIN:-gitlab.com}
 # GitHub repo owner and repo name
 # - required, intentionally no default
 GITHUB_REPO_NAME=${GITHUB_REPO_NAME:-}
-# API authorization token, see https://developer.github.com/v3/#authentication
+# GitHub API authorization token, see https://developer.github.com/v3/#authentication
 # - required but intentionally left blank
+# - permission scope: "repo"
 GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN:-}
 
 # branches/refs to watch for status - one or more, space-separated
@@ -42,7 +44,7 @@ REFS=${REFS:-}
 
 # USB device identifier
 # - optional but recommended; if unspecified, all matching hubs will be switched
-# - many motherboards feature switchable hubs, unplugging your input devices is undesirable
+# - some motherboards feature switchable hubs, unplugging your other devices (keyboard, network, ...) is undesirable
 # - this filters by the device's self-identification
 USB_DEVICE_ID=${USB_DEVICE_ID:-}
 # device location (reported by uhubctl in "Current status for hub 2-1.1")
@@ -64,7 +66,7 @@ USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
 UHUBCTL="$(command -v -- uhubctl)"
 # jq, a JSON command line processor
 JQ="$(command -v -- jq)"
-# if array result, get the newest non-pending part, return state; if single result, return its state.
+# if array result, get the newest completed part, return state; if single result, return its state.
 JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending" and .state != "skipped" and .state != "canceled")) | max_by(.id) | .state else .state end'
 # cURL, a data transfer tool - used for HTTPS requests here.
 CURL="$(command -v -- curl)"
@@ -239,11 +241,21 @@ if [[ "$(type -t __api_status_error)" != 'function' ]]; then
     }
 fi
 
+if [[ "$(type -t __get_ref_list)" != 'function' ]]; then
+    __get_ref_list() {
+        # called to retrieve the list of refs, one per line
+
+        # by default, this only returns the content of $REFS
+        echo "${REFS}" | tr ' ' '\n'
+    }
+fi
+
 SUCCESS=0
 while true; do
     BUILD_FAIL_COUNT=0
     SECONDS=0
     RESULT=0
+    # loop through the available branches
     while read -r BRANCH; do
         URL="$(__get_url "${GITLAB_PROJECT_ID}" "${GITHUB_REPO_NAME}" "${BRANCH}")"
 
@@ -269,7 +281,7 @@ while true; do
         if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
         fi
-    done < <(echo "${REFS}" | tr ' ' '\n')
+    done < <(__get_ref_list)
 
 
     if [[ "${FALLBACK}" -lt 2 ]]; then
