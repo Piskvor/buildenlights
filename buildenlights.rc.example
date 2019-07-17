@@ -52,6 +52,16 @@ USB_PORT_FAILURE="any"
 #UHUBCTL=/usr/local/bin/uhubctl.x86
 #CURL=/somewhere/curl
 #JQ=/home/user/bin/jq-latest
+## Also possible, but unadvisable: invocation with sudo
+#UHUBCTL=(sudo --non-interactive -- uhubctl)
+
+## EXPERT: if curl unavailable, it is possible to substitute wget, wget2, busybox, or
+##
+#CURL=/usr/bin/wget
+#CURL=wget2
+#CURL=(/bin/busybox wget)
+# Note that wget has different options
+#CURL_OPTIONS=(--quiet -O -)
 
 ## EXPERT: define any of your own success/failure on/off function(s). If defined, they will be used instead of the default.
 ##

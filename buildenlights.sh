@@ -63,9 +63,9 @@ USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-}
 # ... and another for a "failure" light.
 USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
-UHUBCTL="$(command -v -- uhubctl)"
+UHUBCTL=("$(command -v -- uhubctl)")
 # jq, a JSON command line processor
-JQ="$(command -v -- jq)"
+JQ=("$(command -v -- jq)")
 # JQ script to transform the received JSON into a single string value
 JQ_SCRIPT=${JQ_SCRIPT:-}
 if [[ -z "$JQ_SCRIPT" ]]; then
@@ -74,7 +74,7 @@ if [[ -z "$JQ_SCRIPT" ]]; then
     JQ_SCRIPT='if . | type == "array" then map({"st": (try (.state) + try (.status)),id} | select (.st != "running" and .st != "pending" and .st != "skipped" and .st != "canceled")) | max_by(.id) | .st else (try(.state) + try(.status)) end'
 fi
 # cURL, a data transfer tool - used for HTTPS requests here.
-CURL="$(command -v -- curl)"
+CURL=("$(command -v -- curl)")
 CURL_OPTIONS=(--silent --show-error)
 
 # time in seconds to wait for the API response
@@ -122,7 +122,7 @@ fi
 
 # this is a hard requirement
 # - everything else can be replaced or worked around
-if [[ ! -x "${UHUBCTL}" ]]; then
+if [[ ! -x "$(command -v -- "${UHUBCTL[0]}")" ]]; then
     echo "Cannot find uhubctl executable."
     exit 2
 fi
@@ -134,7 +134,7 @@ fi
 # curl 7.55.0 can pass in a header via STDIN
 # - this means it's not directly visible; unfortunately, not very widespread on ARM
 __PASS_HEADER_STDIN=0
-if [[ "$(${CURL} --help | grep -- '--header' || true)" =~ '@' ]]; then
+if [[ "$("${CURL[@]}" --help | grep -- '--header' || true)" =~ '@' ]]; then
     __PASS_HEADER_STDIN=1
 fi
 
@@ -181,9 +181,9 @@ __uhubctl_call() {
     # do not exit on error here (e.g. no hubs matched)
     # be more verbose if debug 2
     if [[ "$DEBUG" -lt 2 ]]; then
-        "${UHUBCTL}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" &> /dev/null || true
+        "${UHUBCTL[@]}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" &> /dev/null || true
     else
-        "${UHUBCTL}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" || true
+        "${UHUBCTL[@]}" --vendor "${USB_DEVICE_ID}" --loc "${USB_DEVICE_LOCATION}" --action "${ACTION}" "${PORTS[@]}" || true
     fi
 }
 
@@ -225,13 +225,13 @@ __api_status_call() {
     fi
     # note that we're passing the auth header by heredoc - this prevents it from appearing directly in the commandline
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
-        | ${JQ} --raw-output "${JQ_SCRIPT}"
+        | "${JQ[@]}" --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" \
-        | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
+        (timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" \
+        | "${JQ[@]}" --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
 
