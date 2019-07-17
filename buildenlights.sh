@@ -131,6 +131,13 @@ if [[ "$DEBUG" -lt 1 ]]; then
     set +o xtrace # no more verbosity
 fi
 
+# curl 7.55.0 can pass in a header via STDIN
+# - this means it's not directly visible; unfortunately, not very widespread on ARM
+__PASS_HEADER_STDIN=0
+if [[ "$(${CURL} --help | grep -- '--header' || true)" =~ '@' ]]; then
+    __PASS_HEADER_STDIN=1
+fi
+
 # The following statements define the four on/off functions, unless they were defined previously.
 # This means that each of the functions can be defined in ./buildenlights.rc, overriding the default behavior.
 # The default functions are simplest possible - they only call the uhubctl control functions.
@@ -208,14 +215,20 @@ __api_status_call() {
         PROXY=(--proxy "${FALLBACK_PROXY}")
     fi
 
+    AUTH_HEADER="$(__get_auth_header || true)"
+    if [[ ${__PASS_HEADER_STDIN} -eq 0 ]]; then
+        AUTH_HEADER_PARAM="$AUTH_HEADER"
+    else
+        AUTH_HEADER_PARAM="@-"
+    fi
     # note that we're passing the auth header by heredoc - this prevents it from appearing directly in the commandline
     if [[ "$DEBUG" -ge 2 ]]; then
-        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" || true)
+        STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
         | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
-        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" \
+        (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" \
         | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
