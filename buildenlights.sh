@@ -290,7 +290,7 @@ while true; do
         if [[ "$DELAY_BETWEEN_REQUESTS" != "0" ]]; then
             sleep "$DELAY_BETWEEN_REQUESTS"
         fi
-        if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]]; then
+        if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]] || [[ "$BUILD_STATUS" = "null" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
         fi
     done < <(__get_ref_list)
