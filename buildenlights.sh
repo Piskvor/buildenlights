@@ -218,9 +218,9 @@ __api_status_call() {
 if [[ "$(type -t __get_auth_header)" != 'function' ]]; then
     # return authorization header in GL/GH format
     __get_auth_header() {
-        if [[ -n "$GITLAB_PERSONAL_ACCESS_TOKEN" ]]; then
+        if [[ -n "$GITLAB_PROJECT_ID" ]]; then
             echo "PRIVATE-TOKEN: ${GITLAB_PERSONAL_ACCESS_TOKEN}"
-        elif [[ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]]; then
+        elif [[ -n "$GITHUB_REPO_NAME" ]]; then
             echo "Authorization: token ${GITHUB_PERSONAL_ACCESS_TOKEN}"
         fi
     }
