@@ -167,7 +167,7 @@ if [[ "$(type -t __failure_off)" != 'function' ]]; then
 fi
 # all uhubctl interaction happens here
 __uhubctl_call() {
-    ACTION="${1}"
+    local ACTION="${1}"
     if [[ -z "${2:-}" ]] || [[ "${2}" = "any" ]] ; then
         # toggle all ports
         PORTS=()
@@ -189,9 +189,9 @@ __uhubctl_call() {
 
 # get the API URL - this differs for GL and GH
 __get_url() {
-    GITLAB_PROJECT_ID="${1:-}"
-    GITHUB_REPO_NAME="${2:-}"
-    BRANCH="${3:-}"
+    local GITLAB_PROJECT_ID="${1:-}"
+    local GITHUB_REPO_NAME="${2:-}"
+    local BRANCH="${3:-}"
     # see https://developer.github.com/v3/repos/statuses/
     if [[ -n "$GITLAB_PROJECT_ID" ]]; then
         echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}&scope=finished"
@@ -205,8 +205,10 @@ __get_url() {
 #  - in that case, use the latest
 #  - there's some sed mangling to have GL and GH report the same field (status/state)
 __api_status_call() {
-    FALLBACK="${1}"
-    URL="${2}"
+    local FALLBACK="${1}"
+    local URL="${2}"
+    local AUTH_HEADER
+    local AUTH_HEADER_PARAM
     if [[ "${FALLBACK}" -eq 0 ]]; then
         TIMEOUT="${REQUEST_TIMEOUT}"
         PROXY=()
