@@ -67,7 +67,7 @@ UHUBCTL="$(command -v -- uhubctl)"
 # jq, a JSON command line processor
 JQ="$(command -v -- jq)"
 # if array result, get the newest completed part, return state; if single result, return its state.
-JQ_SCRIPT='if . | type == "array" then map(select (.state != "pending" and .state != "skipped" and .state != "canceled")) | max_by(.id) | .state else .state end'
+JQ_SCRIPT='if . | type == "array" then map({"st": (try (.state) + try (.status)),id} | select (.st != "pending" and .st != "skipped" and .st != "canceled")) | max_by(.id) | .st else (try(.state) + try(.status)) end'
 # cURL, a data transfer tool - used for HTTPS requests here.
 CURL="$(command -v -- curl)"
 CURL_OPTIONS=(--silent --show-error)
@@ -208,10 +208,10 @@ __api_status_call() {
         STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" || true)
         echo "${STATUS_DATA}" > /dev/stderr
         echo "${STATUS_DATA}" \
-        | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}"
+        | ${JQ} --raw-output "${JQ_SCRIPT}"
     else
         (timeout "${TIMEOUT}" "${CURL}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" -H @- "${URL}" <<<"$(__get_auth_header)" \
-        | sed 's/"status"/"state"/g' | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
+        | ${JQ} --raw-output "${JQ_SCRIPT}" || true)
     fi
 }
 
