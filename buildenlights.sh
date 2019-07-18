@@ -282,6 +282,19 @@ if [[ "$(type -t __get_ref_list)" != 'function' ]]; then
     }
 fi
 
+if [[ "$(type -t __interrupted)" != 'function' ]]; then
+    __interrupted() {
+        # called when script is interrupted - by default, turn off both lights if not running
+
+        if [[ "${INFINITE_LOOP}" -eq 1 ]] ; then
+            __failure_off
+            __success_off
+        fi
+    }
+fi
+
+trap '__interrupted' SIGINT
+
 SUCCESS=0
 while true; do
     BUILD_FAIL_COUNT=0
