@@ -4,9 +4,27 @@ After=rc-local.service network.target network-online.target
 
 [Service]
 Type=simple
-ExecStart=%h/buildenlights/buildenlights.sh
-RestartSec=30
+
+# change to =null for less info in logs
+StandardOutput=syslog
+
+StandardError=syslog
+SyslogIdentifier=buildenlights
+# restart interval
+RestartSec=300
+WorkingDirectory=%h
+
+# note that variables set by ENV are overridden by buildenlights.rc, if set there
+#Environment="DEBUG=1"
+
+## either: do not loop, have systemd run the script
+ExecStart=%h/buildenlights.sh
 Restart=always
+
+## or: loop internally, sleeping for DELAY_LOOP_SECONDS (default 300)
+#ExecStart=%h/buildenlights.sh --infinite-loop
+#Restart=on-failure
+#Environment="DELAY_LOOP_SECONDS=150"
 
 [Install]
 WantedBy=multi-user.target
