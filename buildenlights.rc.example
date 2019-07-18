@@ -63,8 +63,9 @@ USB_PORT_FAILURE="any"
 # Note that wget has different options
 #CURL_OPTIONS=(--quiet -O -)
 
-## EXPERT: define any of your own success/failure on/off function(s). If defined, they will be used instead of the default.
+## EXPERT: define your own success/failure on/off function(s) - any inside the [[ type -t ]] check. If defined, they will be used instead of the default.
 ##
+## Example: do more when turning on a status light
 #__success_on() {
 #    wall "Good news everyone!"
 #    __uhubctl_call 1 "${USB_PORT_SUCCESS}"
@@ -75,6 +76,12 @@ USB_PORT_FAILURE="any"
 #    wall "I suggest we take off and nuke the entire site from orbit."
 #    __uhubctl_call 1 "${USB_PORT_FAILURE}"
 #    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
+#}
+## Example: always load refs from an external file - this allows loading them dynamically, without restarting the script
+#__get_ref_list() {
+#    cat /some/path/refs.rc
+#    # or even load them from an external server
+#    # "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" https://yourserver.example.com/current_refs
 #}
 
 ## EXPERT: redefine the JQ script which transforms the JSON returned from API into a string "success"/"failed"/"failure"/* (where anything else is an error)
