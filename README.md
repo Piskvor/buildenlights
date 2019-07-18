@@ -54,10 +54,10 @@ Shows a literal green or red light according to project's GitLab/GitHub build st
 
 ## Running
 
-- Simplest case: `buildenlights.sh --infinite-loop` - waits for `DELAY_SECONDS` between each run.  
+- Simplest case: `buildenlights.sh --infinite-loop` - waits for `DELAY_LOOP_SECONDS` between each run.  
 - Nohup: `nohup buildenlights.sh --infinite-loop &` - doesn't exit with terminal
-- Cron or similar scheduler: `*/10 * * * * * /home/your/path/buildenlights.sh > /dev/null 2> /dev/null` - ignores the `DELAY_SECONDS` variable
-- Systemd: example units are provided in `systemd-example/`, one which loops via systemd, other looping internally 
+- Cron or similar scheduler: `*/10 * * * * * /home/your/path/buildenlights.sh > /dev/null 2> /dev/null` - ignores the `DELAY_LOOP_SECONDS` variable
+- Systemd: example unit is provided in `systemd-example/`, with an install script (takes script location into account)
 
 ## Advanced config
 

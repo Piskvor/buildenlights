@@ -12,9 +12,9 @@ if [[ "$DEBUG" -ge 1 ]]; then
     set -o xtrace # be extra verbose for debugging
 fi
 
-DO_LOOP=${DO_LOOP:-0}
+INFINITE_LOOP=${INFINITE_LOOP:-0}
 if [[ "${1:-}" = "--infinite-loop" ]]; then
-    DO_LOOP=1
+    INFINITE_LOOP=1
     shift
 fi
 
@@ -83,7 +83,7 @@ FALLBACK_PROXY=${FALLBACK_PROXY:-}
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
 FALLBACK_PROXY_REQUEST_TIMEOUT=${FALLBACK_PROXY_REQUEST_TIMEOUT:-30}
 # delay between loops
-DELAY_SECONDS=${DELAY_SECONDS:-300}
+DELAY_LOOP_SECONDS=${DELAY_LOOP_SECONDS:-300}
 # delay between API requests within one iteration
 DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
 
@@ -252,9 +252,9 @@ if [[ "$(type -t __api_status_finished)" != 'function' ]]; then
 
         # we currently ignore SUCCESS_STATE in $1, just wait for next run.
         # do not delay if not looping internally, though
-        if [[ "${DO_LOOP}" -gt 0 ]]; then
-            echo "sleep ${DELAY_SECONDS}..."
-            sleep "${DELAY_SECONDS}" || true
+        if [[ "${INFINITE_LOOP}" -gt 0 ]]; then
+            echo "sleep ${DELAY_LOOP_SECONDS}..."
+            sleep "${DELAY_LOOP_SECONDS}" || true
         fi
     }
 fi
@@ -263,10 +263,10 @@ if [[ "$(type -t __api_status_error)" != 'function' ]]; then
     __api_status_error() {
         # called when the API itself is in an error state, e.g. returning unicorns or when network breaks
 
-        # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting DO_LOOP=0
+        # we currently only wait longer for next run - we could e.g. try to recover, or quit by setting INFINITE_LOOP=0
         # do not delay if not looping internally, though
-        if [[ "${DO_LOOP}" -gt 0 ]]; then
-            LONGER_SLEEP=$(( DELAY_SECONDS * 10 ))
+        if [[ "${INFINITE_LOOP}" -gt 0 ]]; then
+            LONGER_SLEEP=$(( DELAY_LOOP_SECONDS * 10 ))
             echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
             sleep "${LONGER_SLEEP}" || true
         fi
@@ -347,7 +347,7 @@ while true; do
     fi
 
     # we can quit the script by setting this variable to 0, e.g. in a handler
-    if [[ "${DO_LOOP}" -eq 0 ]]; then
+    if [[ "${INFINITE_LOOP}" -eq 0 ]]; then
         exit ${RESULT}
     fi
 done

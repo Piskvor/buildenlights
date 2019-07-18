@@ -35,7 +35,7 @@ USB_PORT_FAILURE="any"
 ## INTERMEDIATE: network tweaks and fallback proxy - uncomment to use
 ##
 # delay between iterations
-#DELAY_SECONDS="300"
+#DELAY_LOOP_SECONDS="300"
 # delay between requests inside one iteration
 #DELAY_BETWEEN_REQUESTS="0"
 # time in seconds to wait for the API response
