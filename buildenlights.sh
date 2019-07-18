@@ -293,7 +293,7 @@ if [[ "$(type -t __interrupted)" != 'function' ]]; then
     }
 fi
 
-trap '__interrupted' SIGINT
+trap '__interrupted' SIGINT EXIT
 
 SUCCESS=0
 while true; do
