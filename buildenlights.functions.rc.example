@@ -1,0 +1,24 @@
+#!/bin/bash
+# shellcheck disable=SC2034
+# ^^^ disable "unused variable" warning
+
+## EXPERT: define your own success/failure on/off function(s) - any inside the [[ type -t ]] check. If defined, they will be used instead of the default.
+##
+## Example: do more when turning on a status light
+#__success_on() {
+#    wall "Good news everyone!"
+#    __uhubctl_call 1 "${USB_PORT_SUCCESS}"
+#    echo "on" >> /tmp/on.log
+#}
+#
+#__failure_on() {
+#    wall "I suggest we take off and nuke the entire site from orbit."
+#    __uhubctl_call 1 "${USB_PORT_FAILURE}"
+#    __uhubctl_call 0 "${USB_PORT_SUCCESS}"
+#}
+## Example: always load refs from an external file - this allows loading them dynamically, without restarting the script
+#__get_ref_list() {
+#    cat /some/path/refs.rc
+#    # or even load them from an external server
+#    # "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" https://yourserver.example.com/current_refs
+#}

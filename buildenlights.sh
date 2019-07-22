@@ -87,11 +87,27 @@ DELAY_LOOP_SECONDS=${DELAY_LOOP_SECONDS:-300}
 # delay between API requests within one iteration
 DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
 
-# override the above defaults
+# rcfile location, if it exists
+BUILDENLIGHTS_RC="${BUILDENLIGHTS_RC:-./buildenlights.rc}"
+BUILDENLIGHTS_FUNCTIONS_RC="${BUILDENLIGHTS_FUNCTIONS_RC:-./buildenlights.functions.rc}"
+
+# override the above defaults - not required, as options can be passed in ENV
 # - also prevent *your own* authorization token from being stored in git
 # - custom settings belong *there*
 # - see buildenlights.rc.example
-source ./buildenlights.rc
+if [[ -n "${BUILDENLIGHTS_RC}" ]] && [[ -e "${BUILDENLIGHTS_RC}" ]] && [[ ! -d "${BUILDENLIGHTS_RC}" ]]; then
+    # shellcheck source=./buildenlights.rc
+    source "${BUILDENLIGHTS_RC}"
+fi
+
+# override functions, if any
+# - put custom functions here - anything that's in this block below: `if [[ "$(type -t XYZZY)" != 'function' ]]; then`
+# - separated from buildenlights.rc: won't redefine functions, but re-reading rcfile should be possible
+# - see buildenlights.rc.example
+if [[ -n "${BUILDENLIGHTS_FUNCTIONS_RC}" ]] && [[ -e "${BUILDENLIGHTS_FUNCTIONS_RC}" ]] && [[ ! -d "${BUILDENLIGHTS_FUNCTIONS_RC}" ]]; then
+    # shellcheck source=./buildenlights.functions.rc
+    source "${BUILDENLIGHTS_FUNCTIONS_RC}"
+fi
 
 if [[ -n "$GITLAB_PROJECT_ID" ]] && [[ -n "$GITHUB_REPO_NAME" ]]; then
     echo "Cannot work with both GitLab and GitHub in the same script, sorry"
