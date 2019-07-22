@@ -39,11 +39,11 @@ USB_PORT_FAILURE="any"
 # delay between requests inside one iteration
 #DELAY_BETWEEN_REQUESTS="0"
 # time in seconds to wait for the API response
-#REQUEST_TIMEOUT="5"
+#REQUEST_TIMEOUT="30"
 # if the request doesn't return data, retry via proxy (if any)
 #FALLBACK_PROXY="http://proxy.example.com:3128/"
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
-#FALLBACK_PROXY_REQUEST_TIMEOUT="60"
+#FALLBACK_PROXY_REQUEST_TIMEOUT="90"
 # cURL takes various options, configurable here
 #CURL_OPTIONS=(--silent --show-error)
 

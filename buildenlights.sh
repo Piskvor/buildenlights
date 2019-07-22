@@ -77,15 +77,15 @@ CURL=("$(command -v -- curl)")
 CURL_OPTIONS=(--silent --show-error)
 
 # time in seconds to wait for the API response
-REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
+REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-30}"
 # if the request doesn't return data, retry via proxy (if any)
-FALLBACK_PROXY=${FALLBACK_PROXY:-}
+FALLBACK_PROXY="${FALLBACK_PROXY:-}"
 # time to wait for the API response when going through proxy - set this to a larger value, as this is already a fallback
-FALLBACK_PROXY_REQUEST_TIMEOUT=${FALLBACK_PROXY_REQUEST_TIMEOUT:-30}
+FALLBACK_PROXY_REQUEST_TIMEOUT="${FALLBACK_PROXY_REQUEST_TIMEOUT:-90}"
 # delay between loops
-DELAY_LOOP_SECONDS=${DELAY_LOOP_SECONDS:-300}
+DELAY_LOOP_SECONDS="${DELAY_LOOP_SECONDS:-300}"
 # delay between API requests within one iteration
-DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
+DELAY_BETWEEN_REQUESTS="${DELAY_BETWEEN_REQUESTS:-0}"
 
 # rcfile location, if it exists
 BUILDENLIGHTS_RC="${BUILDENLIGHTS_RC:-./buildenlights.rc}"
