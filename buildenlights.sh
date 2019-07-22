@@ -91,11 +91,25 @@ DELAY_BETWEEN_REQUESTS=${DELAY_BETWEEN_REQUESTS:-0}
 BUILDENLIGHTS_RC="${BUILDENLIGHTS_RC:-./buildenlights.rc}"
 BUILDENLIGHTS_FUNCTIONS_RC="${BUILDENLIGHTS_FUNCTIONS_RC:-./buildenlights.functions.rc}"
 
+# get absolute path to file
+# - ./relative is relative to $PWD, not to script location
+# - would break if invoked from elsewhere
+# - rcfile can be specified in environment
+__get_real_path() {
+    cd "$(dirname "$0")"
+    if [[ -n "${1:-}" ]] ; then
+        realpath "${1}"
+    fi
+}
+
+BUILDENLIGHTS_RC=$(__get_real_path "${BUILDENLIGHTS_RC}")
+BUILDENLIGHTS_FUNCTIONS_RC=$(__get_real_path "${BUILDENLIGHTS_FUNCTIONS_RC}")
+
 # override the above defaults - not required, as options can be passed in ENV
 # - also prevent *your own* authorization token from being stored in git
 # - custom settings belong *there*
 # - see buildenlights.rc.example
-if [[ -n "${BUILDENLIGHTS_RC}" ]] && [[ -e "${BUILDENLIGHTS_RC}" ]] && [[ ! -d "${BUILDENLIGHTS_RC}" ]]; then
+if [[ -n "${BUILDENLIGHTS_RC}" ]] && [[ -e "${BUILDENLIGHTS_RC}" ]]; then
     # shellcheck source=./buildenlights.rc
     source "${BUILDENLIGHTS_RC}"
 fi
@@ -104,7 +118,7 @@ fi
 # - put custom functions here - anything that's in this block below: `if [[ "$(type -t XYZZY)" != 'function' ]]; then`
 # - separated from buildenlights.rc: won't redefine functions, but re-reading rcfile should be possible
 # - see buildenlights.rc.example
-if [[ -n "${BUILDENLIGHTS_FUNCTIONS_RC}" ]] && [[ -e "${BUILDENLIGHTS_FUNCTIONS_RC}" ]] && [[ ! -d "${BUILDENLIGHTS_FUNCTIONS_RC}" ]]; then
+if [[ -n "${BUILDENLIGHTS_FUNCTIONS_RC}" ]] && [[ -e "${BUILDENLIGHTS_FUNCTIONS_RC}" ]]; then
     # shellcheck source=./buildenlights.functions.rc
     source "${BUILDENLIGHTS_FUNCTIONS_RC}"
 fi
