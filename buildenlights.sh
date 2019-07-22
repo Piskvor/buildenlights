@@ -287,13 +287,13 @@ if [[ "$(type -t __interrupted)" != 'function' ]]; then
         # called when script is interrupted - by default, turn off both lights if not running
 
         if [[ "${INFINITE_LOOP}" -eq 1 ]] ; then
-            __failure_off
-            __success_off
+            __failure_off || true
+            __success_off || true
         fi
     }
 fi
 
-trap '__interrupted' SIGINT EXIT
+trap '__interrupted || true; exit' SIGINT
 
 SUCCESS=0
 while true; do
