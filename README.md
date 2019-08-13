@@ -1,26 +1,26 @@
 # buildenlights
-Shows a literal green or red light according to project's GitLab/GitHub build status.
+Shows a literal green or red light according to project's GitLab/GitHub build status. For the impatient: see the TL;DR in last paragraph.
 
-![When the build breaks, the duck is ... unhappy](redDuck.jpg)
+![Status: red light on](redDuck.jpg)
 
 ## Overview
 
-- USB hub is connected to a computer
-- USB lights are connected to the hub
+- USB hub is connected to a computer (in the installation above, a RPi running Debian)
+- USB lights are connected to the hub (e.g. as seen here, the lights are inside the rubber duck's head)
 - `buildenlights` runs in a loop or periodically
    - checks GitHub/GitLab repo status (using curl+jq)
-   - if status of all branches is "success", turns green light on (using uhubctl)
+   - if status of all specified branches ("master" by default) is "success", turns green light on (using uhubctl)
    - if status of any branch is "failed", turns red light on (using uhubctl)
-   - if the checks fail (e.g. network unreachable), turns both lights off.
+   - if the checks fail (e.g. network is unreachable), turns both lights off.
 
 ## Requirements
 
-- a computer/device running Linux, OSX or similar UN*X-like (uhubctl apparently has [no Windows support](https://github.com/mvp/uhubctl/issues/79))
-- a switchable USB hub (see [a list of working devices](https://github.com/mvp/uhubctl#user-content-compatible-usb-hubs) for a recommended list) - note that some devices already have a hub integrated (e.g. RPi 3B+)
-- two lights (e.g. green and red, one to indicate success, the other for failure), to plug into the hub (one is necessary, two are better)
-- bash
+- a computer/device running Linux, OSX or a similar UN*Xlike (uhubctl apparently has [no Windows support](https://github.com/mvp/uhubctl/issues/79))
+- a switchable USB hub (see [a list of working devices](https://github.com/mvp/uhubctl#user-content-compatible-usb-hubs) for a recommended list) - note that some devices already have a switchable hub integrated (e.g. RPi 3B+)
+- two lights (e.g. green and red, one to indicate success, the other for failure), to plug into the hub (at least one is necessary, two are better, more are not currently supported)
+- bash (any version built after 2000 should be sufficient)
 - [uhubctl](https://github.com/mvp/uhubctl#user-content-compiling) to switch the USB ports on and off
-- [curl](https://curl.haxx.se/) for requesting the repo status
+- [curl](https://curl.haxx.se/) for requesting the repo status (wget also works)
 - [jq](https://stedolan.github.io/jq/) for parsing the status result
 - a GitLab or GitHub repository with CI enabled
 
@@ -37,12 +37,12 @@ Shows a literal green or red light according to project's GitLab/GitHub build st
           Port 4: 0100 power
     ```
     - The interesting parts are the location (`1-1.3`) and the device identification (`05e3:0608`), those depend on your specific setup.
-    - If uhubctl complains `No compatible smart hubs detected!` but works with sudo, it also offers a fix. Note that you need to edit the vendor ID - in this case, this would be `ATTR{idVendor}=="05e3"` (the first part of the device ID). 
+    - If uhubctl complains `No compatible smart hubs detected!` but works with sudo, it also offers a fix. Note that you need to edit the vendor ID - in this example, it would be `ATTR{idVendor}=="05e3"` (the first part of the device ID).
     - If you see multiple hubs, try unplugging the one you want and see which disappears from the list.
     - Plug the lights into the hub, and try cycling each port (`--action 2`) - that will give you the port numbers for each light: `for X in 1 2 3 4; do uhubctl --loc 1-1.3 --action 2 --delay 10 --port $X; sleep 10; done`, where `--loc` is taken from the output above (I have 4 ports in the listing, so I try them `in 1 2 3 4`, similarly for e.g. 7-port hubs). Note the port number when a light is turned off.
     
 - In your GitHub/GitLab account, make a Personal access token
-    - GL needs the "api" permission, GH needs the "repo" permission
+    - GL needs the `api` permission, GH needs the `repo` permission
     - Copy the token
     
 - Copy buildenlights.rc.example to buildenlights.rc and edit the config
@@ -58,18 +58,18 @@ Shows a literal green or red light according to project's GitLab/GitHub build st
 
 - Simplest case: `buildenlights.sh --infinite-loop` - waits for `DELAY_LOOP_SECONDS` between each run.  
 - Nohup: `nohup buildenlights.sh --infinite-loop &` - doesn't exit with terminal
-- Cron or similar scheduler: `*/10 * * * * * /home/your/path/buildenlights.sh > /dev/null 2> /dev/null` - ignores the `DELAY_LOOP_SECONDS` variable
-- Systemd: example unit is provided in `systemd-example/`, with an install script (takes script location into account)
+- Cron or similar scheduler: `*/10 * * * * * /home/your/path/buildenlights.sh > /dev/null 2> /dev/null` - ignores the `DELAY_LOOP_SECONDS` variable, doesn't switch lights off when exiting.
+- Systemd: example unit is provided in `systemd-example/`, with an install script (takes the script location into account)
 
 ## Advanced config
 
 - Variables can be passed in environment (but rcfile would still override them)
-- Usual proxying HTTP(S) requests via ENV vars (`http_proxy`,`https_proxy`) works; there's also `FALLBACK_PROXY` for cases when direct connection is broken, but HTTP proxy access is still possible (my specific use case)
+- Usual proxying HTTP(S) requests via ENV vars works (`http_proxy`,`https_proxy`); there's also `FALLBACK_PROXY` for cases when direct connection is broken, but HTTP proxy access is still possible (my specific use case)
 - if binaries are outside `PATH`, they can be specified through `UHUBCTL`,`CURL`, and `JQ`.
 
 ### Expert: overriding the result functions
 
-If specific functionality is required, the result functions can be defined in `buildenlights.rc`. Those will be called *instead* of the default ones, so if the default functionality is required, it must be copied there.
+If specific functionality is required, the result functions can be defined in `buildenlights.functions.rc`. Those will be called *instead* of the default ones, so if the default functionality is required, it must be copied there.
 
 This applies to 4 result functions ((success|failure)×(on|off)) and 2 API calls' results: 
  - `__success_on` (turn on green light)
@@ -81,7 +81,8 @@ This applies to 4 result functions ((success|failure)×(on|off)) and 2 API calls
 
 ## TL;DR:
 
+ - plug the lights in
  - check that your `uhubctl` works
- - create `buildenlights.rc`, set `USB_DEVICE_LOCATION`, and either { `GITLAB_PROJECT_ID`, `GITLAB_PERSONAL_ACCESS_TOKEN` } or { `GITHUB_REPO_NAME`, `GITHUB_PERSONAL_ACCESS_TOKEN` }
+ - create `buildenlights.rc` using the example file, set `USB_DEVICE_LOCATION`, and either { `GITLAB_PROJECT_ID`, `GITLAB_PERSONAL_ACCESS_TOKEN` } or { `GITHUB_REPO_NAME`, `GITHUB_PERSONAL_ACCESS_TOKEN` }
  - run `./buildenlights.sh --infinite-loop`
- - watch the blinkenlights
+ - watch the blinkenlights (this part is *expected* to be boring, with green always on :wink:)
