@@ -1,6 +1,8 @@
 # buildenlights
 Shows a literal green or red light according to project's GitLab/GitHub build status.
 
+![When the build breaks, the duck is ... unhappy](redDuck.jpg)
+
 ## Overview
 
 - USB hub is connected to a computer
