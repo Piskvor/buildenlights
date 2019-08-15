@@ -327,11 +327,15 @@ trap '__interrupted || true; exit' SIGINT
 
 SUCCESS=0
 while true; do
+    BUILD_COUNT=0
+    BUILD_SUCCESS_COUNT=0
     BUILD_FAIL_COUNT=0
+
     SECONDS=0
     RESULT=0
     # loop through the available branches
     while read -r BRANCH; do
+        BUILD_COUNT=$(( BUILD_COUNT + 1 ))
         URL="$(__get_url "${GITLAB_PROJECT_ID}" "${GITHUB_REPO_NAME}" "${BRANCH}")"
 
         FALLBACK=0
@@ -353,8 +357,10 @@ while true; do
         if [[ "$DELAY_BETWEEN_REQUESTS" != "0" ]]; then
             sleep "$DELAY_BETWEEN_REQUESTS"
         fi
-        if [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]] || [[ "$BUILD_STATUS" = "null" ]]; then
+        if [[ "$BUILD_STATUS" = "failed" ]] || [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]] || [[ "$BUILD_STATUS" = "null" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
+        elif [[ "$BUILD_STATUS" = "succeeded" ]] || [[ "$BUILD_STATUS" = "success" ]]; then
+            BUILD_SUCCESS_COUNT=$(( BUILD_SUCCESS_COUNT + 1 ))
         fi
     done < <(__get_ref_list)
 
@@ -362,12 +368,12 @@ while true; do
     if [[ "${FALLBACK}" -lt 2 ]]; then
         echo "${SECONDS} seconds wall time"
         echo "Result: ${BUILD_STATUS}"
-        if [[ "$BUILD_FAIL_COUNT" -eq 0 ]]; then
+        if [[ "$BUILD_FAIL_COUNT" -eq 0 ]] && [[ "$BUILD_SUCCESS_COUNT" -eq "$BUILD_COUNT" ]]; then
             # disable failure light, enable success light
             __failure_off
             __success_on
             SUCCESS=1
-        elif [[ "${BUILD_STATUS}" = "failed" ]] || [[ "${BUILD_STATUS}" = "failure" ]] || [[ "${BUILD_STATUS}" = "error" ]]; then
+        elif [[ "$BUILD_FAIL_COUNT" -gt 0 ]]; then
             # disable success light, enable failure light
             __success_off
             __failure_on
