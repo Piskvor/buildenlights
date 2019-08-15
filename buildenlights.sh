@@ -58,11 +58,11 @@ USB_DEVICE_LOCATION=${USB_DEVICE_LOCATION:-}
 # - setting the port number to "-" (hyphen) disables switching of this type (success/failure)
 # (e.g. in my first setup, only the failure light was present)
 # Here, we use one port for a "success" light...
-USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-}
+USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-any}
 # ... and another for a "failure" light.
-USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
+USB_PORT_FAILURE=${USB_PORT_FAILURE:--}
 # ... and yet another for a "pending" light.
-USB_PORT_PENDING=${USB_PORT_PENDING:-}
+USB_PORT_PENDING=${USB_PORT_PENDING:--}
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL=("$(command -v -- uhubctl)")
 # jq, a JSON command line processor
