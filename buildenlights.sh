@@ -61,6 +61,8 @@ USB_DEVICE_LOCATION=${USB_DEVICE_LOCATION:-}
 USB_PORT_SUCCESS=${USB_PORT_SUCCESS:-}
 # ... and another for a "failure" light.
 USB_PORT_FAILURE=${USB_PORT_FAILURE:-}
+# ... and yet another for a "pending" light.
+USB_PORT_PENDING=${USB_PORT_PENDING:-}
 # uhubctl executable, Magic Happens Here - get the source at https://github.com/mvp/uhubctl
 UHUBCTL=("$(command -v -- uhubctl)")
 # jq, a JSON command line processor
@@ -331,6 +333,7 @@ if [[ "$(type -t __interrupted)" != 'function' ]]; then
         if [[ "${INFINITE_LOOP}" -eq 1 ]] ; then
             __failure_off || true
             __success_off || true
+            __pending_off || true
         fi
     }
 fi
