@@ -195,6 +195,18 @@ if [[ "$(type -t __failure_off)" != 'function' ]]; then
         __uhubctl_call 0 "${USB_PORT_FAILURE}"
     }
 fi
+if [[ "$(type -t __pending_on)" != 'function' ]]; then
+    # enable the pending light
+    __pending_on() {
+        __uhubctl_call 1 "${USB_PORT_PENDING}"
+    }
+fi
+if [[ "$(type -t __pending_off)" != 'function' ]]; then
+    # disable the pending light
+    __pending_off() {
+        __uhubctl_call 0 "${USB_PORT_PENDING}"
+    }
+fi
 # all uhubctl interaction happens here
 __uhubctl_call() {
     local ACTION="${1}"
@@ -330,6 +342,7 @@ while true; do
     BUILD_COUNT=0
     BUILD_SUCCESS_COUNT=0
     BUILD_FAIL_COUNT=0
+    BUILD_PENDING_COUNT=0
 
     SECONDS=0
     RESULT=0
@@ -361,6 +374,8 @@ while true; do
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
         elif [[ "$BUILD_STATUS" = "succeeded" ]] || [[ "$BUILD_STATUS" = "success" ]]; then
             BUILD_SUCCESS_COUNT=$(( BUILD_SUCCESS_COUNT + 1 ))
+        elif [[ "$BUILD_STATUS" = "pending" ]] || [[ "$BUILD_STATUS" = "running" ]] || [[ "$BUILD_STATUS" = "runs" ]]; then
+            BUILD_PENDING_COUNT=$(( BUILD_PENDING_COUNT + 1 ))
         fi
     done < <(__get_ref_list)
 
@@ -372,16 +387,23 @@ while true; do
             # disable failure light, enable success light
             __failure_off
             __success_on
+            __pending_off
             SUCCESS=1
         elif [[ "$BUILD_FAIL_COUNT" -gt 0 ]]; then
             # disable success light, enable failure light
             __success_off
             __failure_on
+            __pending_off
             SUCCESS=0
-        else
-            # unrecognized state (e.g. pending?), disable both lights
+        elif [[ "$BUILD_PENDING_COUNT" -gt 0 ]]; then
             __success_off
             __failure_off
+            __pending_on
+        else
+            # unrecognized state (e.g. network error?), disable both lights
+            __success_off
+            __failure_off
+            __pending_off
         fi
 
         # pass the last known success state and current build status
@@ -391,6 +413,7 @@ while true; do
         # error state (e.g. API not responding?), disable both lights and try to recover
         __success_off
         __failure_off
+        __pending_off
         __api_status_error "${SUCCESS}"
         RESULT=3
     fi

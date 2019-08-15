@@ -31,6 +31,7 @@ USB_DEVICE_LOCATION="2-1.4"
 # "-" disables this feature, number selects a port, "any" switches all ports on the selected device
 USB_PORT_SUCCESS="-"
 USB_PORT_FAILURE="any"
+USB_PORT_PENDING="-"
 
 ## INTERMEDIATE: network tweaks and fallback proxy - uncomment to use
 ##
