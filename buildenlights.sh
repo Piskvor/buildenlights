@@ -170,6 +170,11 @@ if [[ "$("${CURL[@]}" --help | grep -- '--header' || true)" =~ '@' ]]; then
     __PASS_HEADER_STDIN=1
 fi
 
+# if this is set to 1, rcfile will be reloaded at the start of next loop
+# allows for SIGHUP-initiated reloads
+# Note that only buildenlights.rc is reloaded, not buildenlights.functions.rc
+__RELOAD_CONFIG=0
+
 # The following statements define the four on/off functions, unless they were defined previously.
 # This means that each of the functions can be defined in ./buildenlights.rc, overriding the default behavior.
 # The default functions are simplest possible - they only call the uhubctl control functions.
@@ -298,7 +303,7 @@ if [[ "$(type -t __api_status_finished)" != 'function' ]]; then
         # do not delay if not looping internally, though
         if [[ "${INFINITE_LOOP}" -gt 0 ]]; then
             echo "sleep ${DELAY_LOOP_SECONDS}..."
-            sleep "${DELAY_LOOP_SECONDS}" || true
+            __unquiet_sleep "${DELAY_LOOP_SECONDS}" || true
         fi
     }
 fi
@@ -312,7 +317,7 @@ if [[ "$(type -t __api_status_error)" != 'function' ]]; then
         if [[ "${INFINITE_LOOP}" -gt 0 ]]; then
             LONGER_SLEEP=$(( DELAY_LOOP_SECONDS * 10 ))
             echo "Fetching status has failed, sleeping for ${LONGER_SLEEP} seconds"
-            sleep "${LONGER_SLEEP}" || true
+            __unquiet_sleep "${LONGER_SLEEP}" || true
         fi
     }
 fi
@@ -323,6 +328,17 @@ if [[ "$(type -t __get_ref_list)" != 'function' ]]; then
 
         # by default, this only returns the content of $REFS
         echo "${REFS}" | tr ' ' '\n'
+    }
+fi
+
+if [[ "$(type -t __unquiet_sleep)" != 'function' ]]; then
+    __unquiet_sleep() {
+        # called as a replacement for sleep: if a signal is received, it reacts immediately
+        # note the single ampersand - "sleep in background and wait for it to finish"
+        sleep "${1}" & wait %1
+
+        # for triggering on any config change automatically, use this instead:
+        # inotifywait -e modify -q -q -t "${1}" "${BUILDENLIGHTS_RC}" && __RELOAD_CONFIG=1
     }
 fi
 
@@ -339,9 +355,16 @@ if [[ "$(type -t __interrupted)" != 'function' ]]; then
 fi
 
 trap '__interrupted || true; exit' SIGINT
+trap '__RELOAD_CONFIG=1;kill %1 >/dev/null 2>/dev/null' SIGHUP
 
 SUCCESS=0
 while true; do
+    if [[ "${__RELOAD_CONFIG}" != 0 ]] && [[ -n "${BUILDENLIGHTS_RC}" ]] && [[ -e "${BUILDENLIGHTS_RC}" ]]; then
+      # shellcheck source=./buildenlights.rc
+      source "${BUILDENLIGHTS_RC}"
+      __RELOAD_CONFIG=0
+    fi
+
     BUILD_COUNT=0
     BUILD_SUCCESS_COUNT=0
     BUILD_FAIL_COUNT=0
@@ -371,7 +394,7 @@ while true; do
         fi
         # floats round down, 0.5 -eq 0
         if [[ "$DELAY_BETWEEN_REQUESTS" != "0" ]]; then
-            sleep "$DELAY_BETWEEN_REQUESTS"
+            __unquiet_sleep "$DELAY_BETWEEN_REQUESTS"
         fi
         if [[ "$BUILD_STATUS" = "failed" ]] || [[ "$BUILD_STATUS" = "failure" ]] || [[ "$BUILD_STATUS" = "error" ]] || [[ "$BUILD_STATUS" = "null" ]]; then
             BUILD_FAIL_COUNT=$(( BUILD_FAIL_COUNT + 1 ))
