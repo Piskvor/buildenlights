@@ -355,6 +355,41 @@ if [[ "$(type -t __interrupted)" != 'function' ]]; then
 	}
 fi
 
+if [[ "$(type -t __success_set_lights)" != 'function' ]]; then
+	__success_set_lights() {
+		# disable failure light, enable success light
+		__failure_off
+		__success_on
+		__pending_off
+	}
+fi
+
+if [[ "$(type -t __failure_set_lights)" != 'function' ]]; then
+	__failure_set_lights() {
+		# disable failure light, enable success light
+		__success_off
+		__failure_on
+		__pending_off
+	}
+fi
+
+if [[ "$(type -t __pending_set_lights)" != 'function' ]]; then
+	__pending_set_lights() {
+		__success_off
+		__failure_off
+		__pending_on
+	}
+fi
+
+if [[ "$(type -t __unknown_set_lights)" != 'function' ]]; then
+	__unknown_set_lights() {
+		# unrecognized state (e.g. network error?), disable both lights
+		__success_off
+		__failure_off
+		__pending_off
+	}
+fi
+
 trap '__interrupted || true; exit' SIGINT
 trap '__RELOAD_CONFIG=1;kill %1 >/dev/null 2>/dev/null' SIGHUP
 
@@ -410,26 +445,15 @@ while true; do
 		echo "${SECONDS} seconds wall time"
 		echo "Result: ${BUILD_STATUS}"
 		if [[ "$BUILD_FAIL_COUNT" -eq 0 ]] && [[ "$BUILD_SUCCESS_COUNT" -eq "$BUILD_COUNT" ]]; then
-			# disable failure light, enable success light
-			__failure_off
-			__success_on
-			__pending_off
+			__success_set_lights
 			SUCCESS=1
 		elif [[ "$BUILD_FAIL_COUNT" -gt 0 ]]; then
-			# disable success light, enable failure light
-			__success_off
-			__failure_on
-			__pending_off
+			__failure_set_lights
 			SUCCESS=0
 		elif [[ "$BUILD_PENDING_COUNT" -gt 0 ]]; then
-			__success_off
-			__failure_off
-			__pending_on
+			__pending_set_lights
 		else
-			# unrecognized state (e.g. network error?), disable both lights
-			__success_off
-			__failure_off
-			__pending_off
+			__unknown_set_lights
 		fi
 
 		# pass the last known success state and current build status
