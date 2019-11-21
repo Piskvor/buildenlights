@@ -390,6 +390,27 @@ if [[ "$(type -t __unknown_set_lights)" != 'function' ]]; then
 	}
 fi
 
+if [[ "$(type -t __success_branch)" != 'function' ]]; then
+	__success_branch() {
+	  # this branch has succeeded building
+		:
+	}
+fi
+
+if [[ "$(type -t __failure_branch)" != 'function' ]]; then
+	__failure_branch() {
+	  # this branch has failed building
+		:
+	}
+fi
+
+if [[ "$(type -t __pending_branch)" != 'function' ]]; then
+	__pending_branch() {
+	  # this branch is still building
+		:
+	}
+fi
+
 trap '__interrupted || true; exit' SIGINT
 trap '__RELOAD_CONFIG=1;kill %1 >/dev/null 2>/dev/null' SIGHUP
 
@@ -434,10 +455,13 @@ while true; do
 		fi
 		if [[ "$BUILD_STATUS" == "failed" ]] || [[ "$BUILD_STATUS" == "failure" ]] || [[ "$BUILD_STATUS" == "error" ]] || [[ "$BUILD_STATUS" == "null" ]]; then
 			BUILD_FAIL_COUNT=$((BUILD_FAIL_COUNT + 1))
+  		__failure_branch "$BRANCH"
 		elif [[ "$BUILD_STATUS" == "succeeded" ]] || [[ "$BUILD_STATUS" == "success" ]]; then
 			BUILD_SUCCESS_COUNT=$((BUILD_SUCCESS_COUNT + 1))
+			__success_branch "$BRANCH"
 		elif [[ "$BUILD_STATUS" == "pending" ]] || [[ "$BUILD_STATUS" == "running" ]] || [[ "$BUILD_STATUS" == "runs" ]]; then
 			BUILD_PENDING_COUNT=$((BUILD_PENDING_COUNT + 1))
+			__pending_branch "$BRANCH"
 		fi
 	done < <(__get_ref_list)
 
