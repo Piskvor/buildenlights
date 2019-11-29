@@ -278,9 +278,20 @@ __api_status_call() {
 	if [[ "$DEBUG" -ge 2 ]]; then
 		echo "${STATUS_DATA}" >/dev/stderr
 	fi
+	__status_data "${STATUS_DATA}"
   echo "${STATUS_DATA}" |
     "${JQ[@]}" --raw-output "${JQ_SCRIPT}"
 }
+
+
+if [[ "$(type -t __status_data)" != 'function' ]]; then
+	__status_data() {
+		# called with each status data result
+
+		# does nothing by default
+		:
+	}
+fi
 
 if [[ "$(type -t __get_auth_header)" != 'function' ]]; then
 	# return authorization header in GL/GH format
