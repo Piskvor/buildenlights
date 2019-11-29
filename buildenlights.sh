@@ -253,6 +253,7 @@ __get_url() {
 # note that a response could be a single result or multiple
 #  - in that case, use the latest
 #  - there's some sed mangling to have GL and GH report the same field (status/state)
+STATUS_DATA=""
 __api_status_call() {
 	local FALLBACK="${1}"
 	local URL="${2}"
@@ -273,15 +274,12 @@ __api_status_call() {
 		# if we have a recent enough curl, pass the auth header by heredoc - this prevents it from appearing directly in the commandline
 		AUTH_HEADER_PARAM="@-"
 	fi
+  STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
 	if [[ "$DEBUG" -ge 2 ]]; then
-		STATUS_DATA=$(timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" || true)
 		echo "${STATUS_DATA}" >/dev/stderr
-		echo "${STATUS_DATA}" |
-			"${JQ[@]}" --raw-output "${JQ_SCRIPT}"
-	else
-		(timeout "${TIMEOUT}" "${CURL[@]}" "${CURL_OPTIONS[@]}" "${PROXY[@]}" --header "$AUTH_HEADER_PARAM" "${URL}" <<<"$AUTH_HEADER" |
-			"${JQ[@]}" --raw-output "${JQ_SCRIPT}" || true)
 	fi
+  echo "${STATUS_DATA}" |
+    "${JQ[@]}" --raw-output "${JQ_SCRIPT}"
 }
 
 if [[ "$(type -t __get_auth_header)" != 'function' ]]; then
