@@ -442,11 +442,11 @@ while true; do
 	RESULT=0
 	# loop through the available branches
 	while read -r BRANCH; do
-		BUILD_COUNT=$((BUILD_COUNT + 1))
 		URL="$(__get_url "${GITLAB_PROJECT_ID}" "${GITHUB_REPO_NAME}" "${BRANCH}")"
 		if [[ -z "$URL" ]]; then
 		  continue
     fi
+		BUILD_COUNT=$((BUILD_COUNT + 1))
 
 		FALLBACK=0
 		BUILD_STATUS=$(__api_status_call "${FALLBACK}" "${URL}") || FALLBACK=1
