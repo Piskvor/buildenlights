@@ -241,12 +241,14 @@ __get_url() {
 	local GITLAB_PROJECT_ID="${1:-}"
 	local GITHUB_REPO_NAME="${2:-}"
 	local BRANCH="${3:-}"
-	# see https://developer.github.com/v3/repos/statuses/
-	if [[ -n "$GITLAB_PROJECT_ID" ]]; then
-		echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}&scope=finished"
-	elif [[ -n "$GITHUB_REPO_NAME" ]]; then
-		echo "https://api.github.com/repos/${GITHUB_REPO_NAME}/commits/${BRANCH}/status"
-	fi
+	if [[ -n "${BRANCH//[[:space:]]/}" ]]; then
+    # see https://developer.github.com/v3/repos/statuses/
+    if [[ -n "$GITLAB_PROJECT_ID" ]]; then
+      echo "https://${GITLAB_DOMAIN}/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?ref=${BRANCH}&scope=finished"
+    elif [[ -n "$GITHUB_REPO_NAME" ]]; then
+      echo "https://api.github.com/repos/${GITHUB_REPO_NAME}/commits/${BRANCH}/status"
+    fi
+  fi
 }
 
 # request the ref status from API
@@ -442,6 +444,9 @@ while true; do
 	while read -r BRANCH; do
 		BUILD_COUNT=$((BUILD_COUNT + 1))
 		URL="$(__get_url "${GITLAB_PROJECT_ID}" "${GITHUB_REPO_NAME}" "${BRANCH}")"
+		if [[ -z "$URL" ]]; then
+		  continue
+    fi
 
 		FALLBACK=0
 		BUILD_STATUS=$(__api_status_call "${FALLBACK}" "${URL}") || FALLBACK=1
